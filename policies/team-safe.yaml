@@ -1,0 +1,23 @@
+name: team-safe
+person_names: role-preserve
+company_names: placeholder
+customer_names: placeholder
+product_names: placeholder
+emails: placeholder
+phone_numbers: remove
+payment_details: remove
+api_keys: remove
+domains: placeholder
+exact_dates: date-generalize
+money_amounts: range
+launch_strategy: generalize
+preserve_task_structure: true
+write_entity_map: false
+ai_assist: false
+terms:
+  person_names:
+  company_names:
+  customer_names:
+  product_names:
+  launch_strategy:
+

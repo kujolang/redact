@@ -1,0 +1,10 @@
+.redact/
+redact-audit/
+redact-transcript-audit/
+transcript.md
+transcript.policy.yaml
+transcript.redacted.md
+transcript.report.json
+*.tmp
+*.log
+

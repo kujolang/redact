@@ -1,0 +1,21 @@
+export func ai_provider_contract() {
+    return {
+        "implemented": false,
+        "stages": ["detect-ai", "generalize-ai", "verify-ai", "summarize-ai"],
+        "required_log_fields": [
+            "provider",
+            "model",
+            "endpoint_type",
+            "prompt_template_id",
+            "prompt_template_version",
+            "input_hash",
+            "output_hash",
+            "policy",
+            "stage",
+            "reason",
+            "content_exposure"
+        ],
+        "default_remote_exposure": "already-redacted content only"
+    }
+}
+

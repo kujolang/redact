@@ -1,0 +1,35 @@
+from src.policy import load_policy
+from src.document import load_document
+from src.detect import detect_document
+from src.transform import transform_document
+from src.verify import verify_document
+
+func assert_true(cond, message) {
+    if cond == false {
+        print("FAIL: " + message)
+        exit(1)
+    }
+}
+
+policy_res := load_policy("fixtures/sample.policy.yaml")
+assert_true(policy_res["ok"], "policy loads")
+policy := policy_res["policy"]
+assert_true(policy["name"] == "fixture-safe", "policy name")
+
+doc_res := load_document("fixtures/sample.md")
+assert_true(doc_res["ok"], "fixture document loads")
+doc := doc_res["document"]
+
+det := detect_document(doc, policy)
+assert_true(len(det["detections"]) >= 8, "detectors find configured and pattern leakage")
+
+tx := transform_document(doc, det["detections"], policy)
+out := tx["document"]["content"]
+expected := read_file("fixtures/sample.redacted.md")
+assert_true(out == expected, "transformed fixture matches snapshot")
+
+report := verify_document(tx["document"], policy)
+assert_true(report["risk_score"] == "low", "verified output is low risk")
+
+print("redact kujo tests passed")
+

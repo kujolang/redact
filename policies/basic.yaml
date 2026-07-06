@@ -1,0 +1,17 @@
+name: basic
+person_names: placeholder
+company_names: placeholder
+customer_names: placeholder
+product_names: placeholder
+emails: placeholder
+phone_numbers: remove
+payment_details: remove
+api_keys: remove
+domains: placeholder
+exact_dates: date-generalize
+money_amounts: range
+launch_strategy: generalize
+preserve_task_structure: true
+write_entity_map: false
+ai_assist: false
+

@@ -1,0 +1,188 @@
+from src.policy import policy_action, policy_role
+from src.util import replace_all_text, count_substr, value_hash
+
+export func transform_document(doc, detections, policy) {
+    mut content := doc["content"]
+    mut counters := {}
+    mut replacements := {}
+    mut decisions := []
+    mut transformations := []
+
+    mut i := 0
+    while i < len(detections) {
+        d := detections[i]
+        category := d["category"]
+        original := d["value"]
+        action := policy_action(policy, category)
+        if action == "date-generalize" {
+            action = "generalize"
+        }
+        key := category + ":" + original
+        replacement := ""
+        if has_key(replacements, key) == 1 {
+            replacement = replacements[key]
+        } else {
+            replacement = replacement_for(category, original, action, counters, policy)
+            replacements[key] := replacement
+            counters = bump_counter(counters, category)
+        }
+        n := count_substr(content, original)
+        if n > 0 {
+            content = replace_all_text(content, original, replacement)
+        }
+        decisions = push(decisions, {
+            "category": category,
+            "detector_id": d["detector_id"],
+            "matched_value_hash": value_hash(original),
+            "action": action,
+            "replacement": replacement,
+            "reason": "policy " + policy["name"] + " maps " + category + " to " + action
+        })
+        transformations = push(transformations, {
+            "category": category,
+            "matched_value_hash": value_hash(original),
+            "replacement": replacement,
+            "occurrences": n,
+            "span_start": d["span_start"],
+            "span_end": d["span_end"]
+        })
+        i = i + 1
+    }
+
+    return {
+        "ok": true,
+        "document": {
+            "source_path": doc["source_path"],
+            "input_type": doc["input_type"],
+            "content_hash": doc["content_hash"],
+            "content": content,
+            "metadata": doc["metadata"],
+            "warnings": doc["warnings"]
+        },
+        "decisions": decisions,
+        "transformations": transformations
+    }
+}
+
+func replacement_for(category, original, action, counters, policy) {
+    if action == "remove" {
+        return ""
+    }
+    if action == "range" {
+        return money_bucket(original)
+    }
+    if action == "generalize" {
+        if category == "exact_dates" {
+            return "upcoming internal milestone"
+        }
+        return "sensitive internal strategy"
+    }
+    idx := next_index(counters, category)
+    if action == "role-preserve" {
+        role := policy_role(policy, original, "")
+        if role != "" {
+            return "[" + to_upper_token(role) + "]"
+        }
+        return "[PERSON_" + to_string(idx) + "]"
+    }
+    if category == "person_names" {
+        return "[PERSON_" + to_string(idx) + "]"
+    }
+    if category == "company_names" {
+        return "[COMPANY_" + alpha_index(idx) + "]"
+    }
+    if category == "customer_names" {
+        return "[CUSTOMER_" + alpha_index(idx) + "]"
+    }
+    if category == "product_names" {
+        return "[PRODUCT_" + alpha_index(idx) + "]"
+    }
+    if category == "emails" {
+        return "[EMAIL_" + to_string(idx) + "]"
+    }
+    if category == "phone_numbers" {
+        return "[PHONE_" + to_string(idx) + "]"
+    }
+    if category == "domains" {
+        return "[DOMAIN_" + to_string(idx) + "]"
+    }
+    if category == "api_keys" {
+        return "[API_KEY_" + to_string(idx) + "]"
+    }
+    if category == "payment_details" {
+        return "[PAYMENT_DETAIL_" + to_string(idx) + "]"
+    }
+    return "[" + to_upper_token(category) + "_" + to_string(idx) + "]"
+}
+
+func next_index(counters, category) {
+    if has_key(counters, category) == 1 {
+        return counters[category] + 1
+    }
+    return 1
+}
+
+func bump_counter(counters, category) {
+    if has_key(counters, category) == 1 {
+        counters[category] := counters[category] + 1
+    } else {
+        counters[category] := 1
+    }
+    return counters
+}
+
+func alpha_index(idx) {
+    letters := ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+    if idx >= 1 && idx <= len(letters) {
+        return letters[idx - 1]
+    }
+    return to_string(idx)
+}
+
+func to_upper_token(value) {
+    low := value
+    out := ""
+    mut i := 0
+    while i < len(low) {
+        ch := substring(low, i, i + 1)
+        if ch == " " || ch == "-" {
+            out = out + "_"
+        } else {
+            out = out + to_upper(ch)
+        }
+        i = i + 1
+    }
+    return out
+}
+
+func money_bucket(value) {
+    digits := only_digits(value)
+    n := len(digits)
+    if n <= 3 {
+        return "[THREE_FIGURE_AMOUNT]"
+    }
+    if n == 4 {
+        return "[LOW_FOUR_FIGURE_AMOUNT]"
+    }
+    if n == 5 {
+        return "[MID_FIVE_FIGURE_AMOUNT]"
+    }
+    if n == 6 {
+        return "[SIX_FIGURE_AMOUNT]"
+    }
+    return "[LARGE_AMOUNT]"
+}
+
+func only_digits(value) {
+    mut out := ""
+    mut i := 0
+    while i < len(value) {
+        ch := substring(value, i, i + 1)
+        if ch >= "0" && ch <= "9" {
+            out = out + ch
+        }
+        i = i + 1
+    }
+    return out
+}
+

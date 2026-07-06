@@ -1,0 +1,209 @@
+export func truthy(v) {
+    if type(v) == "bool" {
+        return v
+    }
+    if type(v) == "int" {
+        return v != 0
+    }
+    if type(v) == "null" {
+        return false
+    }
+    if type(v) == "string" {
+        return v != ""
+    }
+    return true
+}
+
+export func list_includes(arr, value) {
+    mut i := 0
+    while i < len(arr) {
+        if arr[i] == value {
+            return true
+        }
+        i = i + 1
+    }
+    return false
+}
+
+export func get_or(dict, key, fallback) {
+    if has_key(dict, key) == 1 {
+        return dict[key]
+    }
+    return fallback
+}
+
+export func lines_of(text) {
+    raw := split(text, "\n")
+    mut out := []
+    mut i := 0
+    while i < len(raw) {
+        line := raw[i]
+        if ends_with(line, "\r") {
+            out = push(out, substring(line, 0, len(line) - 1))
+        } else {
+            out = push(out, line)
+        }
+        i = i + 1
+    }
+    return out
+}
+
+export func read_text(path) {
+    if file_exists(path) == false {
+        return {"ok": false, "error": "file not found: " + path}
+    }
+    if path_is_dir(path) {
+        return {"ok": false, "error": "path is a directory: " + path}
+    }
+    return {"ok": true, "text": read_file(path)}
+}
+
+export func write_text(path, content) {
+    parent := parent_of(path)
+    if parent != "" {
+        ensure_dir(parent)
+    }
+    if file_exists(path) {
+        delete_file(path)
+    }
+    write_file(path, content)
+}
+
+export func append_text(path, content) {
+    parent := parent_of(path)
+    if parent != "" {
+        ensure_dir(parent)
+    }
+    append_file(path, content)
+}
+
+export func ensure_dir(path) {
+    if path == "" || path == "." {
+        return
+    }
+    if path_is_dir(path) {
+        return
+    }
+    parts := split(path, "/")
+    mut cur := ""
+    if starts_with(path, "/") {
+        cur = "/"
+    }
+    mut i := 0
+    while i < len(parts) {
+        part := parts[i]
+        if part != "" && part != "." {
+            if cur == "/" {
+                cur = "/" + part
+            } else if cur == "" {
+                cur = part
+            } else {
+                cur = cur + "/" + part
+            }
+            if path_is_dir(cur) == false {
+                create_dir(cur)
+            }
+        }
+        i = i + 1
+    }
+}
+
+export func parent_of(path) {
+    mut i := len(path) - 1
+    while i >= 0 {
+        if substring(path, i, i + 1) == "/" {
+            return substring(path, 0, i)
+        }
+        i = i - 1
+    }
+    return ""
+}
+
+export func base_of(path) {
+    mut i := len(path) - 1
+    while i >= 0 {
+        if substring(path, i, i + 1) == "/" {
+            return substring(path, i + 1, len(path))
+        }
+        i = i - 1
+    }
+    return path
+}
+
+export func ext_of(path) {
+    name := to_lower(base_of(path))
+    mut i := len(name) - 1
+    while i >= 0 {
+        if substring(name, i, i + 1) == "." {
+            return substring(name, i, len(name))
+        }
+        i = i - 1
+    }
+    return ""
+}
+
+export func iso_now() {
+    return format_date(now(), "YYYY-MM-DDTHH-mm-ssZ")
+}
+
+export func content_hash(text) {
+    return sha256(text)
+}
+
+export func value_hash(text) {
+    return "sha256:" + sha256(text)
+}
+
+export func replace_all_text(text, needle, replacement) {
+    if needle == "" {
+        return text
+    }
+    parts := split(text, needle)
+    if len(parts) == 1 {
+        return text
+    }
+    mut out := parts[0]
+    mut i := 1
+    while i < len(parts) {
+        out = out + replacement + parts[i]
+        i = i + 1
+    }
+    return out
+}
+
+export func count_substr(text, needle) {
+    if needle == "" {
+        return 0
+    }
+    return len(split(text, needle)) - 1
+}
+
+export func str_find_from(text, needle, start_at) {
+    if needle == "" {
+        return -1
+    }
+    nlen := len(needle)
+    mut i := start_at
+    while substring(text, i, i + 1) != "" {
+        if substring(text, i, i + nlen) == needle {
+            return i
+        }
+        i = i + 1
+    }
+    return -1
+}
+
+export func str_find(text, needle) {
+    return str_find_from(text, needle, 0)
+}
+
+export func json_line(obj) {
+    return to_json(obj) + "\n"
+}
+
+export func unique_push(arr, value) {
+    if list_includes(arr, value) {
+        return arr
+    }
+    return push(arr, value)
+}

@@ -1,0 +1,99 @@
+from src.util import ensure_dir, write_text, append_text, json_line, iso_now, content_hash
+
+export func audit_start(root, command, input_path, policy) {
+    run_id := iso_now()
+    run_dir := root + "/runs/" + run_id
+    ensure_dir(run_dir)
+    run := {
+        "tool": "redact",
+        "version": "0.1.0",
+        "run_id": run_id,
+        "command": command,
+        "input": input_path,
+        "policy": policy["name"],
+        "started_at": run_id,
+        "local_first": true,
+        "deterministic": true
+    }
+    write_text(run_dir + "/run.json", to_json_pretty(run))
+    write_text(run_dir + "/policy.snapshot.yaml", policy["raw"])
+    write_text(run_dir + "/detections.jsonl", "")
+    write_text(run_dir + "/decisions.jsonl", "")
+    write_text(run_dir + "/transformations.jsonl", "")
+    write_text(run_dir + "/warnings.jsonl", "")
+    return {"ok": true, "run_dir": run_dir, "run_id": run_id}
+}
+
+export func audit_input(run_dir, doc) {
+    manifest := {
+        "source_path": doc["source_path"],
+        "input_type": doc["input_type"],
+        "content_hash": doc["content_hash"],
+        "length": len(doc["content"]),
+        "warnings": doc["warnings"]
+    }
+    write_text(run_dir + "/input-manifest.json", to_json_pretty(manifest))
+}
+
+export func audit_detections(run_dir, detections, unsafe_store_originals) {
+    mut i := 0
+    while i < len(detections) {
+        d := detections[i]
+        entry := {
+            "detector_id": d["detector_id"],
+            "category": d["category"],
+            "span_start": d["span_start"],
+            "span_end": d["span_end"],
+            "matched_value_hash": d["matched_value_hash"],
+            "confidence": d["confidence"],
+            "reason": d["reason"],
+            "suggested_action": d["suggested_action"]
+        }
+        if unsafe_store_originals {
+            entry["original"] := d["value"]
+        }
+        append_text(run_dir + "/detections.jsonl", json_line(entry))
+        i = i + 1
+    }
+}
+
+export func audit_decisions(run_dir, decisions) {
+    mut i := 0
+    while i < len(decisions) {
+        append_text(run_dir + "/decisions.jsonl", json_line(decisions[i]))
+        i = i + 1
+    }
+}
+
+export func audit_transformations(run_dir, transformations) {
+    mut i := 0
+    while i < len(transformations) {
+        append_text(run_dir + "/transformations.jsonl", json_line(transformations[i]))
+        i = i + 1
+    }
+}
+
+export func audit_verify(run_dir, report) {
+    write_text(run_dir + "/verifier-report.json", to_json_pretty(report))
+}
+
+export func audit_output(run_dir, out_path, content) {
+    manifest := {
+        "output_path": out_path,
+        "content_hash": content_hash(content),
+        "length": len(content)
+    }
+    write_text(run_dir + "/output-manifest.json", to_json_pretty(manifest))
+    write_text(run_dir + "/hashes.json", to_json_pretty({
+        "output": content_hash(content)
+    }))
+}
+
+export func audit_warnings(run_dir, warnings) {
+    mut i := 0
+    while i < len(warnings) {
+        append_text(run_dir + "/warnings.jsonl", json_line({"warning": warnings[i]}))
+        i = i + 1
+    }
+}
+

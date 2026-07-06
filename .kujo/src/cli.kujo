@@ -1,0 +1,254 @@
+from src.util import truthy, get_or, write_text, base_of, ensure_dir
+from src.policy import load_policy
+from src.document import load_document
+from src.detect import detect_document
+from src.transform import transform_document
+from src.verify import verify_document
+from src.audit import audit_start, audit_input, audit_detections, audit_decisions, audit_transformations, audit_verify, audit_output, audit_warnings
+
+export func main(argv) {
+    if len(argv) == 0 {
+        print_help()
+        return 2
+    }
+    command := argv[0]
+    if command == "--help" || command == "help" {
+        print_help()
+        return 0
+    }
+    if command == "version" {
+        print("redact 0.1.0")
+        return 0
+    }
+    parsed := parse_args(slice_from(argv, 1))
+    pos := parsed["positionals"]
+    if len(pos) < 1 {
+        print("ERROR: missing input path")
+        return 2
+    }
+    input_path := pos[0]
+    policy_ref := flag(parsed, "policy", "basic")
+    loaded_policy := load_policy(policy_ref)
+    if loaded_policy["ok"] == false {
+        print("ERROR: " + loaded_policy["error"])
+        return 1
+    }
+    policy := loaded_policy["policy"]
+    audit_dir := flag(parsed, "audit-dir", ".redact")
+    unsafe := truthy(get_or(parsed["flags"], "unsafe-store-originals", false))
+
+    if command == "scan" {
+        return cmd_scan(input_path, policy, audit_dir, unsafe)
+    }
+    if command == "sanitize" {
+        return cmd_sanitize(input_path, policy, audit_dir, parsed, unsafe)
+    }
+    if command == "verify" {
+        return cmd_verify(input_path, policy, audit_dir)
+    }
+    if command == "pack" {
+        return cmd_pack(input_path, policy, audit_dir, parsed, unsafe)
+    }
+    print("ERROR: unknown command: " + command)
+    return 2
+}
+
+func cmd_scan(input_path, policy, audit_dir, unsafe) {
+    doc_res := load_document(input_path)
+    if doc_res["ok"] == false {
+        print("ERROR: " + doc_res["error"])
+        return 1
+    }
+    doc := doc_res["document"]
+    audit := audit_start(audit_dir, "scan", input_path, policy)
+    audit_input(audit["run_dir"], doc)
+    det := detect_document(doc, policy)
+    audit_detections(audit["run_dir"], det["detections"], unsafe)
+    summary := {
+        "command": "scan",
+        "input": input_path,
+        "policy": policy["name"],
+        "detections": len(det["detections"]),
+        "categories": category_counts(det["detections"]),
+        "audit_dir": audit["run_dir"]
+    }
+    print(to_json_pretty(summary))
+    return 0
+}
+
+func cmd_sanitize(input_path, policy, audit_dir, parsed, unsafe) {
+    doc_res := load_document(input_path)
+    if doc_res["ok"] == false {
+        print("ERROR: " + doc_res["error"])
+        return 1
+    }
+    doc := doc_res["document"]
+    audit := audit_start(audit_dir, "sanitize", input_path, policy)
+    audit_input(audit["run_dir"], doc)
+    det := detect_document(doc, policy)
+    audit_detections(audit["run_dir"], det["detections"], unsafe)
+    transformed := transform_document(doc, det["detections"], policy)
+    out_doc := transformed["document"]
+    report := verify_document(out_doc, policy)
+    out_path := flag(parsed, "out", default_output_path(input_path))
+    write_text(out_path, out_doc["content"])
+    audit_decisions(audit["run_dir"], transformed["decisions"])
+    audit_transformations(audit["run_dir"], transformed["transformations"])
+    audit_verify(audit["run_dir"], report)
+    audit_output(audit["run_dir"], out_path, out_doc["content"])
+    audit_warnings(audit["run_dir"], report["warnings"])
+    summary := {
+        "command": "sanitize",
+        "input": input_path,
+        "output": out_path,
+        "policy": policy["name"],
+        "detections": len(det["detections"]),
+        "risk_score": report["risk_score"],
+        "audit_dir": audit["run_dir"]
+    }
+    print(to_json_pretty(summary))
+    if should_fail_for_risk(report["risk_score"], flag(parsed, "fail-on-risk", "")) {
+        return 1
+    }
+    return 0
+}
+
+func cmd_verify(input_path, policy, audit_dir) {
+    doc_res := load_document(input_path)
+    if doc_res["ok"] == false {
+        print("ERROR: " + doc_res["error"])
+        return 1
+    }
+    doc := doc_res["document"]
+    audit := audit_start(audit_dir, "verify", input_path, policy)
+    audit_input(audit["run_dir"], doc)
+    report := verify_document(doc, policy)
+    audit_verify(audit["run_dir"], report)
+    audit_warnings(audit["run_dir"], report["warnings"])
+    print(to_json_pretty(report))
+    return 0
+}
+
+func cmd_pack(folder, policy, audit_dir, parsed, unsafe) {
+    if path_is_dir(folder) == false {
+        print("ERROR: pack input is not a folder: " + folder)
+        return 1
+    }
+    out_dir := flag(parsed, "out", "redact-pack")
+    ensure_dir(out_dir)
+    files := list_dir(folder)
+    mut processed := 0
+    mut failed := 0
+    mut i := 0
+    while i < len(files) {
+        name := files[i]
+        path := folder + "/" + name
+        if path_is_dir(path) == false && (ends_with(to_lower(name), ".md") || ends_with(to_lower(name), ".txt")) {
+            out_path := out_dir + "/" + name
+            local := {"flags": {"out": out_path}, "positionals": [path]}
+            code := cmd_sanitize(path, policy, audit_dir, local, unsafe)
+            if code == 0 {
+                processed = processed + 1
+            } else {
+                failed = failed + 1
+            }
+        }
+        i = i + 1
+    }
+    print(to_json_pretty({"command": "pack", "input": folder, "output": out_dir, "processed": processed, "failed": failed}))
+    if failed > 0 {
+        return 1
+    }
+    return 0
+}
+
+func parse_args(tokens) {
+    mut positionals := []
+    mut flags := {}
+    mut i := 0
+    while i < len(tokens) {
+        tok := tokens[i]
+        if starts_with(tok, "--") {
+            key := substring(tok, 2, len(tok))
+            if key == "write-entity-map" || key == "no-entity-map" || key == "unsafe-store-originals" {
+                flags[key] := true
+            } else if i + 1 < len(tokens) && starts_with(tokens[i + 1], "--") == false {
+                flags[key] := tokens[i + 1]
+                i = i + 1
+            } else {
+                flags[key] := ""
+            }
+        } else {
+            positionals = push(positionals, tok)
+        }
+        i = i + 1
+    }
+    return {"positionals": positionals, "flags": flags}
+}
+
+func slice_from(arr, start) {
+    mut out := []
+    mut i := start
+    while i < len(arr) {
+        out = push(out, arr[i])
+        i = i + 1
+    }
+    return out
+}
+
+func flag(parsed, name, fallback) {
+    return get_or(parsed["flags"], name, fallback)
+}
+
+func default_output_path(input_path) {
+    if ends_with(input_path, ".md") {
+        return substring(input_path, 0, len(input_path) - 3) + ".redacted.md"
+    }
+    if ends_with(input_path, ".txt") {
+        return substring(input_path, 0, len(input_path) - 4) + ".redacted.txt"
+    }
+    return input_path + ".redacted"
+}
+
+func category_counts(detections) {
+    mut counts := {}
+    mut i := 0
+    while i < len(detections) {
+        cat := detections[i]["category"]
+        if has_key(counts, cat) == 1 {
+            counts[cat] := counts[cat] + 1
+        } else {
+            counts[cat] := 1
+        }
+        i = i + 1
+    }
+    return counts
+}
+
+func should_fail_for_risk(score, threshold) {
+    if threshold == "" {
+        return false
+    }
+    return risk_rank(score) >= risk_rank(threshold)
+}
+
+func risk_rank(score) {
+    if score == "low" { return 1 }
+    if score == "medium" { return 2 }
+    if score == "high" { return 3 }
+    if score == "incomplete" { return 4 }
+    return 0
+}
+
+func print_help() {
+    print("Redact — local-first deterministic anonymization")
+    print("")
+    print("Usage:")
+    print("  kujo run .kujo/redact.kujo scan <input> --policy <policy>")
+    print("  kujo run .kujo/redact.kujo sanitize <input> --policy <policy> [--out <path>]")
+    print("  kujo run .kujo/redact.kujo verify <input> --policy <policy>")
+    print("  kujo run .kujo/redact.kujo pack <folder> --policy <policy> [--out <dir>]")
+    print("")
+    print("Options: --audit-dir <path> --fail-on-risk medium|high --unsafe-store-originals")
+}
+

@@ -1,0 +1,32 @@
+from src.util import read_text, content_hash, ext_of
+
+export func load_document(path) {
+    if path == "-" {
+        return {"ok": false, "error": "stdin is part of the Redact contract, but this Kujo runtime does not expose stdin reads yet; pass a file path for this MVP build"}
+    }
+    loaded := read_text(path)
+    if loaded["ok"] == false {
+        return loaded
+    }
+    ext := ext_of(path)
+    input_type := "text"
+    if ext == ".md" {
+        input_type = "markdown"
+    }
+    if ext != ".txt" && ext != ".md" {
+        return {"ok": false, "error": "unsupported input type for MVP: " + path}
+    }
+    text := loaded["text"]
+    return {
+        "ok": true,
+        "document": {
+            "source_path": path,
+            "input_type": input_type,
+            "content": text,
+            "content_hash": content_hash(text),
+            "metadata": {"safe": true},
+            "warnings": []
+        }
+    }
+}
+
