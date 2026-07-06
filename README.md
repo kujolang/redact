@@ -6,13 +6,13 @@ It converts sensitive text and Markdown into model-ready context while writing a
 ## Usage
 
 ```bash
-kujo run .kujo/redact.kujo scan fixtures/sample.md --policy fixtures/sample.policy.yaml
-kujo run .kujo/redact.kujo sanitize fixtures/sample.md --policy fixtures/sample.policy.yaml --out sample.redacted.md
-kujo run .kujo/redact.kujo verify sample.redacted.md --policy fixtures/sample.policy.yaml
-kujo run .kujo/redact.kujo pack ./notes --policy external-safe --out redacted-pack
+kujo run redact.kujo scan fixtures/sample.md --policy fixtures/sample.policy.yaml
+kujo run redact.kujo sanitize fixtures/sample.md --policy fixtures/sample.policy.yaml --out sample.redacted.md
+kujo run redact.kujo verify sample.redacted.md --policy fixtures/sample.policy.yaml
+kujo run redact.kujo pack ./notes --policy external-safe --out redacted-pack
 ```
 
-The CLI command is `kujo`; Redact's entrypoint lives at `.kujo/redact.kujo`.
+The CLI command is `kujo`; Redact's entrypoint lives at `redact.kujo` in the repository root.
 
 ## MVP Capabilities
 
@@ -49,4 +49,3 @@ Raw sensitive values are not written to audit logs by default. `--unsafe-store-o
 ```bash
 bash tests/run.sh
 ```
-

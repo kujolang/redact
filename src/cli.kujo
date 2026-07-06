@@ -244,11 +244,10 @@ func print_help() {
     print("Redact — local-first deterministic anonymization")
     print("")
     print("Usage:")
-    print("  kujo run .kujo/redact.kujo scan <input> --policy <policy>")
-    print("  kujo run .kujo/redact.kujo sanitize <input> --policy <policy> [--out <path>]")
-    print("  kujo run .kujo/redact.kujo verify <input> --policy <policy>")
-    print("  kujo run .kujo/redact.kujo pack <folder> --policy <policy> [--out <dir>]")
+    print("  kujo run redact.kujo scan <input> --policy <policy>")
+    print("  kujo run redact.kujo sanitize <input> --policy <policy> [--out <path>]")
+    print("  kujo run redact.kujo verify <input> --policy <policy>")
+    print("  kujo run redact.kujo pack <folder> --policy <policy> [--out <dir>]")
     print("")
     print("Options: --audit-dir <path> --fail-on-risk medium|high --unsafe-store-originals")
 }
-
