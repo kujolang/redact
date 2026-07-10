@@ -44,6 +44,19 @@ Each scan, sanitize, or verify run writes:
 
 Raw sensitive values are not written to audit logs by default. `--unsafe-store-originals` exists for local debugging and is dangerous.
 
+## Security and supported boundary
+
+Redact is a local, deterministic text/Markdown pipeline. It does not make AI
+provider calls, promise full YAML support, process stdin on current Kujo VM
+builds, or replace a review of the produced output. Supported policy files use
+the documented flat-YAML subset; unsupported structures must be rejected or
+treated as a policy error rather than assumed to work.
+
+Read [docs/security.md](docs/security.md) before processing sensitive material.
+In particular, keep audit directories local and protected, avoid
+`--unsafe-store-originals`, and use a new output path so source files are not
+silently overwritten.
+
 ## Tests
 
 ```bash
