@@ -1,4 +1,4 @@
-from src.util import truthy, get_or, write_text, base_of, ensure_dir
+from src.util import truthy, get_or, base_of, ensure_dir, parent_of
 from src.policy import load_policy
 from src.document import load_document
 from src.detect import detect_document
@@ -91,7 +91,9 @@ func cmd_sanitize(input_path, policy, audit_dir, parsed, unsafe) {
     out_doc := transformed["document"]
     report := verify_document(out_doc, policy)
     out_path := flag(parsed, "out", default_output_path(input_path))
-    write_text(out_path, out_doc["content"])
+    parent := parent_of(out_path)
+    if parent != "" { ensure_dir(parent) }
+    write_file_atomic(out_path, out_doc["content"], true)
     audit_decisions(audit["run_dir"], transformed["decisions"])
     audit_transformations(audit["run_dir"], transformed["transformations"])
     audit_verify(audit["run_dir"], report)

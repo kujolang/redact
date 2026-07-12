@@ -58,17 +58,6 @@ export func read_text(path) {
     return {"ok": true, "text": read_file(path)}
 }
 
-export func write_text(path, content) {
-    parent := parent_of(path)
-    if parent != "" {
-        ensure_dir(parent)
-    }
-    if file_exists(path) {
-        delete_file(path)
-    }
-    write_file(path, content)
-}
-
 export func append_text(path, content) {
     parent := parent_of(path)
     if parent != "" {
@@ -140,10 +129,6 @@ export func ext_of(path) {
         i = i - 1
     }
     return ""
-}
-
-export func iso_now() {
-    return format_date(now(), "YYYY-MM-DDTHH-mm-ssZ")
 }
 
 export func content_hash(text) {
