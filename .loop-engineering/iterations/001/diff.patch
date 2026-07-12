@@ -1,29 +1,46 @@
 diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
-index 43c09df..8bc4265 100644
+index 8bc4265..8783a57 100644
 --- a/.loop-engineering/iterations/001/context.md
 +++ b/.loop-engineering/iterations/001/context.md
 @@ -1,6 +1,6 @@
  # Context
  
  - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
--- git_head: 3fec964
-+- git_head: 2f4dd94
+-- git_head: 2f4dd94
++- git_head: 16bde20
  - changed_files:
    - none
 diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
-index 25fa05f..e69de29 100644
+index fe21511..e69de29 100644
 --- a/.loop-engineering/iterations/001/diff.patch
 +++ b/.loop-engineering/iterations/001/diff.patch
-@@ -1,12 +0,0 @@
+@@ -1,29 +0,0 @@
 -diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
--index 40767ed..43c09df 100644
+-index 43c09df..8bc4265 100644
 ---- a/.loop-engineering/iterations/001/context.md
 -+++ b/.loop-engineering/iterations/001/context.md
 -@@ -1,6 +1,6 @@
 - # Context
 - 
 - - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
---- git_head: ad9e9e0
--+- git_head: 3fec964
+--- git_head: 3fec964
+-+- git_head: 2f4dd94
 - - changed_files:
 -   - none
+-diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
+-index 25fa05f..e69de29 100644
+---- a/.loop-engineering/iterations/001/diff.patch
+-+++ b/.loop-engineering/iterations/001/diff.patch
+-@@ -1,12 +0,0 @@
+--diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+--index 40767ed..43c09df 100644
+----- a/.loop-engineering/iterations/001/context.md
+--+++ b/.loop-engineering/iterations/001/context.md
+--@@ -1,6 +1,6 @@
+-- # Context
+-- 
+-- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+---- git_head: ad9e9e0
+--+- git_head: 3fec964
+-- - changed_files:
+--   - none

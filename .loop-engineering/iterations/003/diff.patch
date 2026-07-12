@@ -1,417 +1,837 @@
 diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
-index 43c09df..8bc4265 100644
+index 8bc4265..8783a57 100644
 --- a/.loop-engineering/iterations/001/context.md
 +++ b/.loop-engineering/iterations/001/context.md
 @@ -1,6 +1,6 @@
  # Context
  
  - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
--- git_head: 3fec964
-+- git_head: 2f4dd94
+-- git_head: 2f4dd94
++- git_head: 16bde20
  - changed_files:
    - none
 diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
-index 25fa05f..fe21511 100644
+index fe21511..a0e810f 100644
 --- a/.loop-engineering/iterations/001/diff.patch
 +++ b/.loop-engineering/iterations/001/diff.patch
-@@ -1,12 +1,29 @@
+@@ -1,29 +1,46 @@
  diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
--index 40767ed..43c09df 100644
-+index 43c09df..8bc4265 100644
+-index 43c09df..8bc4265 100644
++index 8bc4265..8783a57 100644
  --- a/.loop-engineering/iterations/001/context.md
  +++ b/.loop-engineering/iterations/001/context.md
  @@ -1,6 +1,6 @@
   # Context
   
   - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
---- git_head: ad9e9e0
--+- git_head: 3fec964
-+-- git_head: 3fec964
-++- git_head: 2f4dd94
+--- git_head: 3fec964
+-+- git_head: 2f4dd94
++-- git_head: 2f4dd94
+++- git_head: 16bde20
   - changed_files:
     - none
-+diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
-+index 25fa05f..e69de29 100644
-+--- a/.loop-engineering/iterations/001/diff.patch
-++++ b/.loop-engineering/iterations/001/diff.patch
-+@@ -1,12 +0,0 @@
-+-diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
-+-index 40767ed..43c09df 100644
-+---- a/.loop-engineering/iterations/001/context.md
-+-+++ b/.loop-engineering/iterations/001/context.md
-+-@@ -1,6 +1,6 @@
-+- # Context
-+- 
-+- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
-+--- git_head: ad9e9e0
-+-+- git_head: 3fec964
-+- - changed_files:
-+-   - none
+ diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
+-index 25fa05f..e69de29 100644
++index fe21511..e69de29 100644
+ --- a/.loop-engineering/iterations/001/diff.patch
+ +++ b/.loop-engineering/iterations/001/diff.patch
+-@@ -1,12 +0,0 @@
++@@ -1,29 +0,0 @@
+ -diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+--index 40767ed..43c09df 100644
++-index 43c09df..8bc4265 100644
+ ---- a/.loop-engineering/iterations/001/context.md
+ -+++ b/.loop-engineering/iterations/001/context.md
+ -@@ -1,6 +1,6 @@
+ - # Context
+ - 
+ - - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+---- git_head: ad9e9e0
+--+- git_head: 3fec964
++--- git_head: 3fec964
++-+- git_head: 2f4dd94
+ - - changed_files:
+ -   - none
++-diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
++-index 25fa05f..e69de29 100644
++---- a/.loop-engineering/iterations/001/diff.patch
++-+++ b/.loop-engineering/iterations/001/diff.patch
++-@@ -1,12 +0,0 @@
++--diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
++--index 40767ed..43c09df 100644
++----- a/.loop-engineering/iterations/001/context.md
++--+++ b/.loop-engineering/iterations/001/context.md
++--@@ -1,6 +1,6 @@
++-- # Context
++-- 
++-- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
++---- git_head: ad9e9e0
++--+- git_head: 3fec964
++-- - changed_files:
++--   - none
 diff --git a/.loop-engineering/iterations/002/context.md b/.loop-engineering/iterations/002/context.md
-index 920b7d2..60109b7 100644
+index 60109b7..c249517 100644
 --- a/.loop-engineering/iterations/002/context.md
 +++ b/.loop-engineering/iterations/002/context.md
 @@ -1,7 +1,7 @@
  # Context
  
  - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
--- git_head: 3fec964
-+- git_head: 2f4dd94
+-- git_head: 2f4dd94
++- git_head: 16bde20
  - changed_files:
    - .loop-engineering/iterations/001/context.md
    - .loop-engineering/iterations/001/diff.patch
 diff --git a/.loop-engineering/iterations/002/diff.patch b/.loop-engineering/iterations/002/diff.patch
-index 9022ff8..1bedcd8 100644
+index 1bedcd8..abcaaa8 100644
 --- a/.loop-engineering/iterations/002/diff.patch
 +++ b/.loop-engineering/iterations/002/diff.patch
-@@ -1,63 +1,139 @@
+@@ -1,139 +1,237 @@
  diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
--index 40767ed..43c09df 100644
-+index 43c09df..8bc4265 100644
+-index 43c09df..8bc4265 100644
++index 8bc4265..8783a57 100644
  --- a/.loop-engineering/iterations/001/context.md
  +++ b/.loop-engineering/iterations/001/context.md
  @@ -1,6 +1,6 @@
   # Context
   
   - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
---- git_head: ad9e9e0
--+- git_head: 3fec964
-+-- git_head: 3fec964
-++- git_head: 2f4dd94
+--- git_head: 3fec964
+-+- git_head: 2f4dd94
++-- git_head: 2f4dd94
+++- git_head: 16bde20
   - changed_files:
     - none
  diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
--index e69de29..25fa05f 100644
-+index 25fa05f..fe21511 100644
+-index 25fa05f..fe21511 100644
++index fe21511..a0e810f 100644
  --- a/.loop-engineering/iterations/001/diff.patch
  +++ b/.loop-engineering/iterations/001/diff.patch
--@@ -0,0 +1,12 @@
--+diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
--+index 40767ed..43c09df 100644
--+--- a/.loop-engineering/iterations/001/context.md
--++++ b/.loop-engineering/iterations/001/context.md
--+@@ -1,6 +1,6 @@
--+ # Context
--+ 
--+ - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
--+-- git_head: ad9e9e0
--++- git_head: 3fec964
--+ - changed_files:
--+   - none
-+@@ -1,12 +1,29 @@
-+ diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
-+-index 40767ed..43c09df 100644
-++index 43c09df..8bc4265 100644
-+ --- a/.loop-engineering/iterations/001/context.md
-+ +++ b/.loop-engineering/iterations/001/context.md
-+ @@ -1,6 +1,6 @@
-+  # Context
-+  
-+  - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
-+--- git_head: ad9e9e0
-+-+- git_head: 3fec964
-++-- git_head: 3fec964
-+++- git_head: 2f4dd94
-+  - changed_files:
-+    - none
-++diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
-++index 25fa05f..e69de29 100644
-++--- a/.loop-engineering/iterations/001/diff.patch
-+++++ b/.loop-engineering/iterations/001/diff.patch
-++@@ -1,12 +0,0 @@
-++-diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
-++-index 40767ed..43c09df 100644
-++---- a/.loop-engineering/iterations/001/context.md
-++-+++ b/.loop-engineering/iterations/001/context.md
-++-@@ -1,6 +1,6 @@
-++- # Context
-++- 
-++- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
-++--- git_head: ad9e9e0
-++-+- git_head: 3fec964
-++- - changed_files:
-++-   - none
+-@@ -1,12 +1,29 @@
++@@ -1,29 +1,46 @@
+  diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+--index 40767ed..43c09df 100644
+-+index 43c09df..8bc4265 100644
++-index 43c09df..8bc4265 100644
+++index 8bc4265..8783a57 100644
+  --- a/.loop-engineering/iterations/001/context.md
+  +++ b/.loop-engineering/iterations/001/context.md
+  @@ -1,6 +1,6 @@
+   # Context
+   
+   - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+---- git_head: ad9e9e0
+--+- git_head: 3fec964
+-+-- git_head: 3fec964
+-++- git_head: 2f4dd94
++--- git_head: 3fec964
++-+- git_head: 2f4dd94
+++-- git_head: 2f4dd94
++++- git_head: 16bde20
+   - changed_files:
+     - none
+-+diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
+-+index 25fa05f..e69de29 100644
+-+--- a/.loop-engineering/iterations/001/diff.patch
+-++++ b/.loop-engineering/iterations/001/diff.patch
+-+@@ -1,12 +0,0 @@
+-+-diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+-+-index 40767ed..43c09df 100644
+-+---- a/.loop-engineering/iterations/001/context.md
+-+-+++ b/.loop-engineering/iterations/001/context.md
+-+-@@ -1,6 +1,6 @@
+-+- # Context
+-+- 
+-+- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+-+--- git_head: ad9e9e0
+-+-+- git_head: 3fec964
+-+- - changed_files:
+-+-   - none
++ diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
++-index 25fa05f..e69de29 100644
+++index fe21511..e69de29 100644
++ --- a/.loop-engineering/iterations/001/diff.patch
++ +++ b/.loop-engineering/iterations/001/diff.patch
++-@@ -1,12 +0,0 @@
+++@@ -1,29 +0,0 @@
++ -diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
++--index 40767ed..43c09df 100644
+++-index 43c09df..8bc4265 100644
++ ---- a/.loop-engineering/iterations/001/context.md
++ -+++ b/.loop-engineering/iterations/001/context.md
++ -@@ -1,6 +1,6 @@
++ - # Context
++ - 
++ - - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
++---- git_head: ad9e9e0
++--+- git_head: 3fec964
+++--- git_head: 3fec964
+++-+- git_head: 2f4dd94
++ - - changed_files:
++ -   - none
+++-diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
+++-index 25fa05f..e69de29 100644
+++---- a/.loop-engineering/iterations/001/diff.patch
+++-+++ b/.loop-engineering/iterations/001/diff.patch
+++-@@ -1,12 +0,0 @@
+++--diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+++--index 40767ed..43c09df 100644
+++----- a/.loop-engineering/iterations/001/context.md
+++--+++ b/.loop-engineering/iterations/001/context.md
+++--@@ -1,6 +1,6 @@
+++-- # Context
+++-- 
+++-- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+++---- git_head: ad9e9e0
+++--+- git_head: 3fec964
+++-- - changed_files:
+++--   - none
  diff --git a/.loop-engineering/iterations/002/context.md b/.loop-engineering/iterations/002/context.md
--index 40767ed..920b7d2 100644
-+index 920b7d2..60109b7 100644
+-index 920b7d2..60109b7 100644
++index 60109b7..c249517 100644
  --- a/.loop-engineering/iterations/002/context.md
  +++ b/.loop-engineering/iterations/002/context.md
--@@ -1,6 +1,7 @@
-+@@ -1,7 +1,7 @@
+ @@ -1,7 +1,7 @@
   # Context
   
   - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
---- git_head: ad9e9e0
--+- git_head: 3fec964
-+-- git_head: 3fec964
-++- git_head: 2f4dd94
+--- git_head: 3fec964
+-+- git_head: 2f4dd94
++-- git_head: 2f4dd94
+++- git_head: 16bde20
   - changed_files:
---  - none
--+  - .loop-engineering/iterations/001/context.md
--+  - .loop-engineering/iterations/001/diff.patch
-+   - .loop-engineering/iterations/001/context.md
-+   - .loop-engineering/iterations/001/diff.patch
+    - .loop-engineering/iterations/001/context.md
+    - .loop-engineering/iterations/001/diff.patch
  diff --git a/.loop-engineering/iterations/002/diff.patch b/.loop-engineering/iterations/002/diff.patch
--index d1c2beb..e69de29 100644
-+index 9022ff8..e69de29 100644
+-index 9022ff8..e69de29 100644
++index 1bedcd8..e69de29 100644
  --- a/.loop-engineering/iterations/002/diff.patch
  +++ b/.loop-engineering/iterations/002/diff.patch
--@@ -1,7 +0,0 @@
-+@@ -1,64 +0,0 @@
-+-diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
-+-index 40767ed..43c09df 100644
-+---- a/.loop-engineering/iterations/001/context.md
-+-+++ b/.loop-engineering/iterations/001/context.md
-+-@@ -1,6 +1,6 @@
-+- # Context
-+- 
-+- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
-+--- git_head: ad9e9e0
-+-+- git_head: 3fec964
-+- - changed_files:
-+-   - none
-+-diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
-+-index e69de29..25fa05f 100644
-+---- a/.loop-engineering/iterations/001/diff.patch
-+-+++ b/.loop-engineering/iterations/001/diff.patch
-+-@@ -0,0 +1,12 @@
-+-+diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
-+-+index 40767ed..43c09df 100644
-+-+--- a/.loop-engineering/iterations/001/context.md
-+-++++ b/.loop-engineering/iterations/001/context.md
-+-+@@ -1,6 +1,6 @@
-+-+ # Context
-+-+ 
-+-+ - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
-+-+-- git_head: ad9e9e0
-+-++- git_head: 3fec964
-+-+ - changed_files:
-+-+   - none
-+-diff --git a/.loop-engineering/iterations/002/context.md b/.loop-engineering/iterations/002/context.md
-+-index 40767ed..920b7d2 100644
-+---- a/.loop-engineering/iterations/002/context.md
-+-+++ b/.loop-engineering/iterations/002/context.md
-+-@@ -1,6 +1,7 @@
-+- # Context
-+- 
-+- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
-+--- git_head: ad9e9e0
-+-+- git_head: 3fec964
-+- - changed_files:
-+--  - none
-+-+  - .loop-engineering/iterations/001/context.md
-+-+  - .loop-engineering/iterations/001/diff.patch
-+-diff --git a/.loop-engineering/iterations/002/diff.patch b/.loop-engineering/iterations/002/diff.patch
-+-index d1c2beb..e69de29 100644
-+---- a/.loop-engineering/iterations/002/diff.patch
-+-+++ b/.loop-engineering/iterations/002/diff.patch
-+-@@ -1,7 +0,0 @@
-+--diff --git a/.loop-engineering/ledger.tsv b/.loop-engineering/ledger.tsv
-+--index dafd866..4c16fa3 100644
-+----- a/.loop-engineering/ledger.tsv
-+--+++ b/.loop-engineering/ledger.tsv
-+--@@ -1 +1,2 @@
-+-- iteration	action	verdict	progress	evidence	justification
-+--+001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
+-@@ -1,64 +0,0 @@
++@@ -1,140 +0,0 @@
+ -diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+--index 40767ed..43c09df 100644
++-index 43c09df..8bc4265 100644
+ ---- a/.loop-engineering/iterations/001/context.md
+ -+++ b/.loop-engineering/iterations/001/context.md
+ -@@ -1,6 +1,6 @@
+ - # Context
+ - 
+ - - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+---- git_head: ad9e9e0
+--+- git_head: 3fec964
++--- git_head: 3fec964
++-+- git_head: 2f4dd94
+ - - changed_files:
+ -   - none
+ -diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
+--index e69de29..25fa05f 100644
++-index 25fa05f..fe21511 100644
+ ---- a/.loop-engineering/iterations/001/diff.patch
+ -+++ b/.loop-engineering/iterations/001/diff.patch
+--@@ -0,0 +1,12 @@
+--+diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+--+index 40767ed..43c09df 100644
+--+--- a/.loop-engineering/iterations/001/context.md
+--++++ b/.loop-engineering/iterations/001/context.md
+--+@@ -1,6 +1,6 @@
+--+ # Context
+--+ 
+--+ - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+--+-- git_head: ad9e9e0
+--++- git_head: 3fec964
+--+ - changed_files:
+--+   - none
++-@@ -1,12 +1,29 @@
++- diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
++--index 40767ed..43c09df 100644
++-+index 43c09df..8bc4265 100644
++- --- a/.loop-engineering/iterations/001/context.md
++- +++ b/.loop-engineering/iterations/001/context.md
++- @@ -1,6 +1,6 @@
++-  # Context
++-  
++-  - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
++---- git_head: ad9e9e0
++--+- git_head: 3fec964
++-+-- git_head: 3fec964
++-++- git_head: 2f4dd94
++-  - changed_files:
++-    - none
++-+diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
++-+index 25fa05f..e69de29 100644
++-+--- a/.loop-engineering/iterations/001/diff.patch
++-++++ b/.loop-engineering/iterations/001/diff.patch
++-+@@ -1,12 +0,0 @@
++-+-diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
++-+-index 40767ed..43c09df 100644
++-+---- a/.loop-engineering/iterations/001/context.md
++-+-+++ b/.loop-engineering/iterations/001/context.md
++-+-@@ -1,6 +1,6 @@
++-+- # Context
++-+- 
++-+- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
++-+--- git_head: ad9e9e0
++-+-+- git_head: 3fec964
++-+- - changed_files:
++-+-   - none
+ -diff --git a/.loop-engineering/iterations/002/context.md b/.loop-engineering/iterations/002/context.md
+--index 40767ed..920b7d2 100644
++-index 920b7d2..60109b7 100644
+ ---- a/.loop-engineering/iterations/002/context.md
+ -+++ b/.loop-engineering/iterations/002/context.md
+--@@ -1,6 +1,7 @@
++-@@ -1,7 +1,7 @@
+ - # Context
+ - 
+ - - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+---- git_head: ad9e9e0
+--+- git_head: 3fec964
++--- git_head: 3fec964
++-+- git_head: 2f4dd94
+ - - changed_files:
+---  - none
+--+  - .loop-engineering/iterations/001/context.md
+--+  - .loop-engineering/iterations/001/diff.patch
++-   - .loop-engineering/iterations/001/context.md
++-   - .loop-engineering/iterations/001/diff.patch
+ -diff --git a/.loop-engineering/iterations/002/diff.patch b/.loop-engineering/iterations/002/diff.patch
+--index d1c2beb..e69de29 100644
++-index 9022ff8..e69de29 100644
+ ---- a/.loop-engineering/iterations/002/diff.patch
+ -+++ b/.loop-engineering/iterations/002/diff.patch
+--@@ -1,7 +0,0 @@
++-@@ -1,64 +0,0 @@
++--diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
++--index 40767ed..43c09df 100644
++----- a/.loop-engineering/iterations/001/context.md
++--+++ b/.loop-engineering/iterations/001/context.md
++--@@ -1,6 +1,6 @@
++-- # Context
++-- 
++-- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
++---- git_head: ad9e9e0
++--+- git_head: 3fec964
++-- - changed_files:
++--   - none
++--diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
++--index e69de29..25fa05f 100644
++----- a/.loop-engineering/iterations/001/diff.patch
++--+++ b/.loop-engineering/iterations/001/diff.patch
++--@@ -0,0 +1,12 @@
++--+diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
++--+index 40767ed..43c09df 100644
++--+--- a/.loop-engineering/iterations/001/context.md
++--++++ b/.loop-engineering/iterations/001/context.md
++--+@@ -1,6 +1,6 @@
++--+ # Context
++--+ 
++--+ - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
++--+-- git_head: ad9e9e0
++--++- git_head: 3fec964
++--+ - changed_files:
++--+   - none
++--diff --git a/.loop-engineering/iterations/002/context.md b/.loop-engineering/iterations/002/context.md
++--index 40767ed..920b7d2 100644
++----- a/.loop-engineering/iterations/002/context.md
++--+++ b/.loop-engineering/iterations/002/context.md
++--@@ -1,6 +1,7 @@
++-- # Context
++-- 
++-- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
++---- git_head: ad9e9e0
++--+- git_head: 3fec964
++-- - changed_files:
++---  - none
++--+  - .loop-engineering/iterations/001/context.md
++--+  - .loop-engineering/iterations/001/diff.patch
++--diff --git a/.loop-engineering/iterations/002/diff.patch b/.loop-engineering/iterations/002/diff.patch
++--index d1c2beb..e69de29 100644
++----- a/.loop-engineering/iterations/002/diff.patch
++--+++ b/.loop-engineering/iterations/002/diff.patch
++--@@ -1,7 +0,0 @@
++---diff --git a/.loop-engineering/ledger.tsv b/.loop-engineering/ledger.tsv
++---index dafd866..4c16fa3 100644
++------ a/.loop-engineering/ledger.tsv
++---+++ b/.loop-engineering/ledger.tsv
++---@@ -1 +1,2 @@
++--- iteration	action	verdict	progress	evidence	justification
++---+001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
+ --diff --git a/.loop-engineering/ledger.tsv b/.loop-engineering/ledger.tsv
+---index dafd866..4c16fa3 100644
++--index 58d34e4..e44f278 100644
+ ----- a/.loop-engineering/ledger.tsv
+ --+++ b/.loop-engineering/ledger.tsv
+---@@ -1 +1,2 @@
+--- iteration	action	verdict	progress	evidence	justification
++--@@ -2,3 +2,4 @@ iteration	action	verdict	progress	evidence	justification
++-- 001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
++-- 002	configured-gates	failed	0	iterations/002/eval.log	required gate failed
++-- 003	configured-gates	failed	0	iterations/003/eval.log	required gate failed
+ --+001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
  -diff --git a/.loop-engineering/ledger.tsv b/.loop-engineering/ledger.tsv
---index dafd866..4c16fa3 100644
-+-index 58d34e4..e44f278 100644
+--index 58d34e4..e44f278 100644
++-index 3bfd30d..73e4200 100644
  ---- a/.loop-engineering/ledger.tsv
  -+++ b/.loop-engineering/ledger.tsv
---@@ -1 +1,2 @@
--- iteration	action	verdict	progress	evidence	justification
-+-@@ -2,3 +2,4 @@ iteration	action	verdict	progress	evidence	justification
-+- 001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
-+- 002	configured-gates	failed	0	iterations/002/eval.log	required gate failed
-+- 003	configured-gates	failed	0	iterations/003/eval.log	required gate failed
+--@@ -2,3 +2,4 @@ iteration	action	verdict	progress	evidence	justification
++-@@ -5,3 +5,4 @@ iteration	action	verdict	progress	evidence	justification
+ - 001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
+ - 002	configured-gates	failed	0	iterations/002/eval.log	required gate failed
+ - 003	configured-gates	failed	0	iterations/003/eval.log	required gate failed
  -+001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
  diff --git a/.loop-engineering/ledger.tsv b/.loop-engineering/ledger.tsv
--index 58d34e4..e44f278 100644
-+index 3bfd30d..73e4200 100644
+-index 3bfd30d..73e4200 100644
++index 57b400c..659bdef 100644
  --- a/.loop-engineering/ledger.tsv
  +++ b/.loop-engineering/ledger.tsv
--@@ -2,3 +2,4 @@ iteration	action	verdict	progress	evidence	justification
-+@@ -5,3 +5,4 @@ iteration	action	verdict	progress	evidence	justification
+-@@ -5,3 +5,4 @@ iteration	action	verdict	progress	evidence	justification
++@@ -8,3 +8,4 @@ iteration	action	verdict	progress	evidence	justification
   001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
   002	configured-gates	failed	0	iterations/002/eval.log	required gate failed
   003	configured-gates	failed	0	iterations/003/eval.log	required gate failed
 diff --git a/.loop-engineering/iterations/003/context.md b/.loop-engineering/iterations/003/context.md
-index f95939b..98c19c5 100644
+index 98c19c5..f8c4bbb 100644
 --- a/.loop-engineering/iterations/003/context.md
 +++ b/.loop-engineering/iterations/003/context.md
 @@ -1,7 +1,7 @@
  # Context
  
  - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
--- git_head: 3fec964
-+- git_head: 2f4dd94
+-- git_head: 2f4dd94
++- git_head: 16bde20
  - changed_files:
    - .loop-engineering/iterations/001/context.md
    - .loop-engineering/iterations/001/diff.patch
 diff --git a/.loop-engineering/iterations/003/diff.patch b/.loop-engineering/iterations/003/diff.patch
-index 456c4e0..92a7cee 100644
+index 0b0e564..f488cc8 100644
 --- a/.loop-engineering/iterations/003/diff.patch
 +++ b/.loop-engineering/iterations/003/diff.patch
-@@ -1,154 +0,0 @@
+@@ -1,419 +0,0 @@
 -diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
--index 40767ed..43c09df 100644
+-index 43c09df..8bc4265 100644
 ---- a/.loop-engineering/iterations/001/context.md
 -+++ b/.loop-engineering/iterations/001/context.md
 -@@ -1,6 +1,6 @@
 - # Context
 - 
 - - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
---- git_head: ad9e9e0
--+- git_head: 3fec964
+--- git_head: 3fec964
+-+- git_head: 2f4dd94
 - - changed_files:
 -   - none
 -diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
--index e69de29..25fa05f 100644
+-index 25fa05f..fe21511 100644
 ---- a/.loop-engineering/iterations/001/diff.patch
 -+++ b/.loop-engineering/iterations/001/diff.patch
--@@ -0,0 +1,12 @@
--+diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
--+index 40767ed..43c09df 100644
--+--- a/.loop-engineering/iterations/001/context.md
--++++ b/.loop-engineering/iterations/001/context.md
--+@@ -1,6 +1,6 @@
--+ # Context
--+ 
--+ - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
--+-- git_head: ad9e9e0
--++- git_head: 3fec964
--+ - changed_files:
--+   - none
--diff --git a/.loop-engineering/iterations/002/context.md b/.loop-engineering/iterations/002/context.md
--index 40767ed..920b7d2 100644
----- a/.loop-engineering/iterations/002/context.md
--+++ b/.loop-engineering/iterations/002/context.md
--@@ -1,6 +1,7 @@
-- # Context
-- 
-- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
---- git_head: ad9e9e0
--+- git_head: 3fec964
-- - changed_files:
---  - none
--+  - .loop-engineering/iterations/001/context.md
--+  - .loop-engineering/iterations/001/diff.patch
--diff --git a/.loop-engineering/iterations/002/diff.patch b/.loop-engineering/iterations/002/diff.patch
--index d1c2beb..9022ff8 100644
----- a/.loop-engineering/iterations/002/diff.patch
--+++ b/.loop-engineering/iterations/002/diff.patch
--@@ -1,7 +1,64 @@
--+diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
--+index 40767ed..43c09df 100644
--+--- a/.loop-engineering/iterations/001/context.md
--++++ b/.loop-engineering/iterations/001/context.md
--+@@ -1,6 +1,6 @@
--+ # Context
--+ 
--+ - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
--+-- git_head: ad9e9e0
--++- git_head: 3fec964
--+ - changed_files:
--+   - none
+-@@ -1,12 +1,29 @@
+- diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+--index 40767ed..43c09df 100644
+-+index 43c09df..8bc4265 100644
+- --- a/.loop-engineering/iterations/001/context.md
+- +++ b/.loop-engineering/iterations/001/context.md
+- @@ -1,6 +1,6 @@
+-  # Context
+-  
+-  - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+---- git_head: ad9e9e0
+--+- git_head: 3fec964
+-+-- git_head: 3fec964
+-++- git_head: 2f4dd94
+-  - changed_files:
+-    - none
 -+diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
--+index e69de29..25fa05f 100644
+-+index 25fa05f..e69de29 100644
 -+--- a/.loop-engineering/iterations/001/diff.patch
 -++++ b/.loop-engineering/iterations/001/diff.patch
--+@@ -0,0 +1,12 @@
--++diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
--++index 40767ed..43c09df 100644
--++--- a/.loop-engineering/iterations/001/context.md
--+++++ b/.loop-engineering/iterations/001/context.md
--++@@ -1,6 +1,6 @@
--++ # Context
--++ 
--++ - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
--++-- git_head: ad9e9e0
--+++- git_head: 3fec964
--++ - changed_files:
--++   - none
--+diff --git a/.loop-engineering/iterations/002/context.md b/.loop-engineering/iterations/002/context.md
--+index 40767ed..920b7d2 100644
--+--- a/.loop-engineering/iterations/002/context.md
--++++ b/.loop-engineering/iterations/002/context.md
--+@@ -1,6 +1,7 @@
--+ # Context
--+ 
--+ - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
--+-- git_head: ad9e9e0
--++- git_head: 3fec964
--+ - changed_files:
--+-  - none
--++  - .loop-engineering/iterations/001/context.md
--++  - .loop-engineering/iterations/001/diff.patch
--+diff --git a/.loop-engineering/iterations/002/diff.patch b/.loop-engineering/iterations/002/diff.patch
--+index d1c2beb..e69de29 100644
--+--- a/.loop-engineering/iterations/002/diff.patch
--++++ b/.loop-engineering/iterations/002/diff.patch
--+@@ -1,7 +0,0 @@
--+-diff --git a/.loop-engineering/ledger.tsv b/.loop-engineering/ledger.tsv
--+-index dafd866..4c16fa3 100644
--+---- a/.loop-engineering/ledger.tsv
--+-+++ b/.loop-engineering/ledger.tsv
--+-@@ -1 +1,2 @@
--+- iteration	action	verdict	progress	evidence	justification
--+-+001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
-- diff --git a/.loop-engineering/ledger.tsv b/.loop-engineering/ledger.tsv
---index dafd866..4c16fa3 100644
--+index 58d34e4..e44f278 100644
-- --- a/.loop-engineering/ledger.tsv
-- +++ b/.loop-engineering/ledger.tsv
---@@ -1 +1,2 @@
--- iteration	action	verdict	progress	evidence	justification
--+@@ -2,3 +2,4 @@ iteration	action	verdict	progress	evidence	justification
--+ 001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
--+ 002	configured-gates	failed	0	iterations/002/eval.log	required gate failed
--+ 003	configured-gates	failed	0	iterations/003/eval.log	required gate failed
-- +001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
--diff --git a/.loop-engineering/iterations/003/context.md b/.loop-engineering/iterations/003/context.md
--index 8f07fd8..f95939b 100644
----- a/.loop-engineering/iterations/003/context.md
--+++ b/.loop-engineering/iterations/003/context.md
--@@ -1,6 +1,10 @@
+-+@@ -1,12 +0,0 @@
+-+-diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+-+-index 40767ed..43c09df 100644
+-+---- a/.loop-engineering/iterations/001/context.md
+-+-+++ b/.loop-engineering/iterations/001/context.md
+-+-@@ -1,6 +1,6 @@
+-+- # Context
+-+- 
+-+- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+-+--- git_head: ad9e9e0
+-+-+- git_head: 3fec964
+-+- - changed_files:
+-+-   - none
+-diff --git a/.loop-engineering/iterations/002/context.md b/.loop-engineering/iterations/002/context.md
+-index 920b7d2..60109b7 100644
+---- a/.loop-engineering/iterations/002/context.md
+-+++ b/.loop-engineering/iterations/002/context.md
+-@@ -1,7 +1,7 @@
 - # Context
 - 
 - - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
---- git_head: ad9e9e0
--+- git_head: 3fec964
+--- git_head: 3fec964
+-+- git_head: 2f4dd94
 - - changed_files:
--+  - .loop-engineering/iterations/001/context.md
--+  - .loop-engineering/iterations/001/diff.patch
--+  - .loop-engineering/iterations/002/context.md
--+  - .loop-engineering/iterations/002/diff.patch
--   - .loop-engineering/ledger.tsv
+-   - .loop-engineering/iterations/001/context.md
+-   - .loop-engineering/iterations/001/diff.patch
+-diff --git a/.loop-engineering/iterations/002/diff.patch b/.loop-engineering/iterations/002/diff.patch
+-index 9022ff8..1bedcd8 100644
+---- a/.loop-engineering/iterations/002/diff.patch
+-+++ b/.loop-engineering/iterations/002/diff.patch
+-@@ -1,63 +1,139 @@
+- diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+--index 40767ed..43c09df 100644
+-+index 43c09df..8bc4265 100644
+- --- a/.loop-engineering/iterations/001/context.md
+- +++ b/.loop-engineering/iterations/001/context.md
+- @@ -1,6 +1,6 @@
+-  # Context
+-  
+-  - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+---- git_head: ad9e9e0
+--+- git_head: 3fec964
+-+-- git_head: 3fec964
+-++- git_head: 2f4dd94
+-  - changed_files:
+-    - none
+- diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
+--index e69de29..25fa05f 100644
+-+index 25fa05f..fe21511 100644
+- --- a/.loop-engineering/iterations/001/diff.patch
+- +++ b/.loop-engineering/iterations/001/diff.patch
+--@@ -0,0 +1,12 @@
+--+diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+--+index 40767ed..43c09df 100644
+--+--- a/.loop-engineering/iterations/001/context.md
+--++++ b/.loop-engineering/iterations/001/context.md
+--+@@ -1,6 +1,6 @@
+--+ # Context
+--+ 
+--+ - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+--+-- git_head: ad9e9e0
+--++- git_head: 3fec964
+--+ - changed_files:
+--+   - none
+-+@@ -1,12 +1,29 @@
+-+ diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+-+-index 40767ed..43c09df 100644
+-++index 43c09df..8bc4265 100644
+-+ --- a/.loop-engineering/iterations/001/context.md
+-+ +++ b/.loop-engineering/iterations/001/context.md
+-+ @@ -1,6 +1,6 @@
+-+  # Context
+-+  
+-+  - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+-+--- git_head: ad9e9e0
+-+-+- git_head: 3fec964
+-++-- git_head: 3fec964
+-+++- git_head: 2f4dd94
+-+  - changed_files:
+-+    - none
+-++diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
+-++index 25fa05f..e69de29 100644
+-++--- a/.loop-engineering/iterations/001/diff.patch
+-+++++ b/.loop-engineering/iterations/001/diff.patch
+-++@@ -1,12 +0,0 @@
+-++-diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+-++-index 40767ed..43c09df 100644
+-++---- a/.loop-engineering/iterations/001/context.md
+-++-+++ b/.loop-engineering/iterations/001/context.md
+-++-@@ -1,6 +1,6 @@
+-++- # Context
+-++- 
+-++- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+-++--- git_head: ad9e9e0
+-++-+- git_head: 3fec964
+-++- - changed_files:
+-++-   - none
+- diff --git a/.loop-engineering/iterations/002/context.md b/.loop-engineering/iterations/002/context.md
+--index 40767ed..920b7d2 100644
+-+index 920b7d2..60109b7 100644
+- --- a/.loop-engineering/iterations/002/context.md
+- +++ b/.loop-engineering/iterations/002/context.md
+--@@ -1,6 +1,7 @@
+-+@@ -1,7 +1,7 @@
+-  # Context
+-  
+-  - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+---- git_head: ad9e9e0
+--+- git_head: 3fec964
+-+-- git_head: 3fec964
+-++- git_head: 2f4dd94
+-  - changed_files:
+---  - none
+--+  - .loop-engineering/iterations/001/context.md
+--+  - .loop-engineering/iterations/001/diff.patch
+-+   - .loop-engineering/iterations/001/context.md
+-+   - .loop-engineering/iterations/001/diff.patch
+- diff --git a/.loop-engineering/iterations/002/diff.patch b/.loop-engineering/iterations/002/diff.patch
+--index d1c2beb..e69de29 100644
+-+index 9022ff8..e69de29 100644
+- --- a/.loop-engineering/iterations/002/diff.patch
+- +++ b/.loop-engineering/iterations/002/diff.patch
+--@@ -1,7 +0,0 @@
+-+@@ -1,64 +0,0 @@
+-+-diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+-+-index 40767ed..43c09df 100644
+-+---- a/.loop-engineering/iterations/001/context.md
+-+-+++ b/.loop-engineering/iterations/001/context.md
+-+-@@ -1,6 +1,6 @@
+-+- # Context
+-+- 
+-+- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+-+--- git_head: ad9e9e0
+-+-+- git_head: 3fec964
+-+- - changed_files:
+-+-   - none
+-+-diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
+-+-index e69de29..25fa05f 100644
+-+---- a/.loop-engineering/iterations/001/diff.patch
+-+-+++ b/.loop-engineering/iterations/001/diff.patch
+-+-@@ -0,0 +1,12 @@
+-+-+diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+-+-+index 40767ed..43c09df 100644
+-+-+--- a/.loop-engineering/iterations/001/context.md
+-+-++++ b/.loop-engineering/iterations/001/context.md
+-+-+@@ -1,6 +1,6 @@
+-+-+ # Context
+-+-+ 
+-+-+ - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+-+-+-- git_head: ad9e9e0
+-+-++- git_head: 3fec964
+-+-+ - changed_files:
+-+-+   - none
+-+-diff --git a/.loop-engineering/iterations/002/context.md b/.loop-engineering/iterations/002/context.md
+-+-index 40767ed..920b7d2 100644
+-+---- a/.loop-engineering/iterations/002/context.md
+-+-+++ b/.loop-engineering/iterations/002/context.md
+-+-@@ -1,6 +1,7 @@
+-+- # Context
+-+- 
+-+- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+-+--- git_head: ad9e9e0
+-+-+- git_head: 3fec964
+-+- - changed_files:
+-+--  - none
+-+-+  - .loop-engineering/iterations/001/context.md
+-+-+  - .loop-engineering/iterations/001/diff.patch
+-+-diff --git a/.loop-engineering/iterations/002/diff.patch b/.loop-engineering/iterations/002/diff.patch
+-+-index d1c2beb..e69de29 100644
+-+---- a/.loop-engineering/iterations/002/diff.patch
+-+-+++ b/.loop-engineering/iterations/002/diff.patch
+-+-@@ -1,7 +0,0 @@
+-+--diff --git a/.loop-engineering/ledger.tsv b/.loop-engineering/ledger.tsv
+-+--index dafd866..4c16fa3 100644
+-+----- a/.loop-engineering/ledger.tsv
+-+--+++ b/.loop-engineering/ledger.tsv
+-+--@@ -1 +1,2 @@
+-+-- iteration	action	verdict	progress	evidence	justification
+-+--+001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
+- -diff --git a/.loop-engineering/ledger.tsv b/.loop-engineering/ledger.tsv
+---index dafd866..4c16fa3 100644
+-+-index 58d34e4..e44f278 100644
+- ---- a/.loop-engineering/ledger.tsv
+- -+++ b/.loop-engineering/ledger.tsv
+---@@ -1 +1,2 @@
+--- iteration	action	verdict	progress	evidence	justification
+-+-@@ -2,3 +2,4 @@ iteration	action	verdict	progress	evidence	justification
+-+- 001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
+-+- 002	configured-gates	failed	0	iterations/002/eval.log	required gate failed
+-+- 003	configured-gates	failed	0	iterations/003/eval.log	required gate failed
+- -+001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
+- diff --git a/.loop-engineering/ledger.tsv b/.loop-engineering/ledger.tsv
+--index 58d34e4..e44f278 100644
+-+index 3bfd30d..73e4200 100644
+- --- a/.loop-engineering/ledger.tsv
+- +++ b/.loop-engineering/ledger.tsv
+--@@ -2,3 +2,4 @@ iteration	action	verdict	progress	evidence	justification
+-+@@ -5,3 +5,4 @@ iteration	action	verdict	progress	evidence	justification
+-  001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
+-  002	configured-gates	failed	0	iterations/002/eval.log	required gate failed
+-  003	configured-gates	failed	0	iterations/003/eval.log	required gate failed
+-diff --git a/.loop-engineering/iterations/003/context.md b/.loop-engineering/iterations/003/context.md
+-index f95939b..98c19c5 100644
+---- a/.loop-engineering/iterations/003/context.md
+-+++ b/.loop-engineering/iterations/003/context.md
+-@@ -1,7 +1,7 @@
+- # Context
+- 
+- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+--- git_head: 3fec964
+-+- git_head: 2f4dd94
+- - changed_files:
+-   - .loop-engineering/iterations/001/context.md
+-   - .loop-engineering/iterations/001/diff.patch
 -diff --git a/.loop-engineering/iterations/003/diff.patch b/.loop-engineering/iterations/003/diff.patch
--index 975ff39..9154019 100644
+-index 456c4e0..92a7cee 100644
 ---- a/.loop-engineering/iterations/003/diff.patch
 -+++ b/.loop-engineering/iterations/003/diff.patch
--@@ -1,8 +0,0 @@
+-@@ -1,154 +0,0 @@
+--diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+--index 40767ed..43c09df 100644
+----- a/.loop-engineering/iterations/001/context.md
+--+++ b/.loop-engineering/iterations/001/context.md
+--@@ -1,6 +1,6 @@
+-- # Context
+-- 
+-- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+---- git_head: ad9e9e0
+--+- git_head: 3fec964
+-- - changed_files:
+--   - none
+--diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
+--index e69de29..25fa05f 100644
+----- a/.loop-engineering/iterations/001/diff.patch
+--+++ b/.loop-engineering/iterations/001/diff.patch
+--@@ -0,0 +1,12 @@
+--+diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+--+index 40767ed..43c09df 100644
+--+--- a/.loop-engineering/iterations/001/context.md
+--++++ b/.loop-engineering/iterations/001/context.md
+--+@@ -1,6 +1,6 @@
+--+ # Context
+--+ 
+--+ - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+--+-- git_head: ad9e9e0
+--++- git_head: 3fec964
+--+ - changed_files:
+--+   - none
+--diff --git a/.loop-engineering/iterations/002/context.md b/.loop-engineering/iterations/002/context.md
+--index 40767ed..920b7d2 100644
+----- a/.loop-engineering/iterations/002/context.md
+--+++ b/.loop-engineering/iterations/002/context.md
+--@@ -1,6 +1,7 @@
+-- # Context
+-- 
+-- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+---- git_head: ad9e9e0
+--+- git_head: 3fec964
+-- - changed_files:
+---  - none
+--+  - .loop-engineering/iterations/001/context.md
+--+  - .loop-engineering/iterations/001/diff.patch
+--diff --git a/.loop-engineering/iterations/002/diff.patch b/.loop-engineering/iterations/002/diff.patch
+--index d1c2beb..9022ff8 100644
+----- a/.loop-engineering/iterations/002/diff.patch
+--+++ b/.loop-engineering/iterations/002/diff.patch
+--@@ -1,7 +1,64 @@
+--+diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+--+index 40767ed..43c09df 100644
+--+--- a/.loop-engineering/iterations/001/context.md
+--++++ b/.loop-engineering/iterations/001/context.md
+--+@@ -1,6 +1,6 @@
+--+ # Context
+--+ 
+--+ - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+--+-- git_head: ad9e9e0
+--++- git_head: 3fec964
+--+ - changed_files:
+--+   - none
+--+diff --git a/.loop-engineering/iterations/001/diff.patch b/.loop-engineering/iterations/001/diff.patch
+--+index e69de29..25fa05f 100644
+--+--- a/.loop-engineering/iterations/001/diff.patch
+--++++ b/.loop-engineering/iterations/001/diff.patch
+--+@@ -0,0 +1,12 @@
+--++diff --git a/.loop-engineering/iterations/001/context.md b/.loop-engineering/iterations/001/context.md
+--++index 40767ed..43c09df 100644
+--++--- a/.loop-engineering/iterations/001/context.md
+--+++++ b/.loop-engineering/iterations/001/context.md
+--++@@ -1,6 +1,6 @@
+--++ # Context
+--++ 
+--++ - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+--++-- git_head: ad9e9e0
+--+++- git_head: 3fec964
+--++ - changed_files:
+--++   - none
+--+diff --git a/.loop-engineering/iterations/002/context.md b/.loop-engineering/iterations/002/context.md
+--+index 40767ed..920b7d2 100644
+--+--- a/.loop-engineering/iterations/002/context.md
+--++++ b/.loop-engineering/iterations/002/context.md
+--+@@ -1,6 +1,7 @@
+--+ # Context
+--+ 
+--+ - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+--+-- git_head: ad9e9e0
+--++- git_head: 3fec964
+--+ - changed_files:
+--+-  - none
+--++  - .loop-engineering/iterations/001/context.md
+--++  - .loop-engineering/iterations/001/diff.patch
+--+diff --git a/.loop-engineering/iterations/002/diff.patch b/.loop-engineering/iterations/002/diff.patch
+--+index d1c2beb..e69de29 100644
+--+--- a/.loop-engineering/iterations/002/diff.patch
+--++++ b/.loop-engineering/iterations/002/diff.patch
+--+@@ -1,7 +0,0 @@
+--+-diff --git a/.loop-engineering/ledger.tsv b/.loop-engineering/ledger.tsv
+--+-index dafd866..4c16fa3 100644
+--+---- a/.loop-engineering/ledger.tsv
+--+-+++ b/.loop-engineering/ledger.tsv
+--+-@@ -1 +1,2 @@
+--+- iteration	action	verdict	progress	evidence	justification
+--+-+001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
+-- diff --git a/.loop-engineering/ledger.tsv b/.loop-engineering/ledger.tsv
+---index dafd866..4c16fa3 100644
+--+index 58d34e4..e44f278 100644
+-- --- a/.loop-engineering/ledger.tsv
+-- +++ b/.loop-engineering/ledger.tsv
+---@@ -1 +1,2 @@
+--- iteration	action	verdict	progress	evidence	justification
+--+@@ -2,3 +2,4 @@ iteration	action	verdict	progress	evidence	justification
+--+ 001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
+--+ 002	configured-gates	failed	0	iterations/002/eval.log	required gate failed
+--+ 003	configured-gates	failed	0	iterations/003/eval.log	required gate failed
+-- +001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
+--diff --git a/.loop-engineering/iterations/003/context.md b/.loop-engineering/iterations/003/context.md
+--index 8f07fd8..f95939b 100644
+----- a/.loop-engineering/iterations/003/context.md
+--+++ b/.loop-engineering/iterations/003/context.md
+--@@ -1,6 +1,10 @@
+-- # Context
+-- 
+-- - objective: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
+---- git_head: ad9e9e0
+--+- git_head: 3fec964
+-- - changed_files:
+--+  - .loop-engineering/iterations/001/context.md
+--+  - .loop-engineering/iterations/001/diff.patch
+--+  - .loop-engineering/iterations/002/context.md
+--+  - .loop-engineering/iterations/002/diff.patch
+--   - .loop-engineering/ledger.tsv
+--diff --git a/.loop-engineering/iterations/003/diff.patch b/.loop-engineering/iterations/003/diff.patch
+--index 975ff39..9154019 100644
+----- a/.loop-engineering/iterations/003/diff.patch
+--+++ b/.loop-engineering/iterations/003/diff.patch
+--@@ -1,8 +0,0 @@
+---diff --git a/.loop-engineering/ledger.tsv b/.loop-engineering/ledger.tsv
+---index dafd866..17b32a2 100644
+------ a/.loop-engineering/ledger.tsv
+---+++ b/.loop-engineering/ledger.tsv
+---@@ -1 +1,3 @@
+--- iteration	action	verdict	progress	evidence	justification
+---+001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
+---+002	configured-gates	failed	0	iterations/002/eval.log	required gate failed
 --diff --git a/.loop-engineering/ledger.tsv b/.loop-engineering/ledger.tsv
---index dafd866..17b32a2 100644
+--index 58d34e4..b99c282 100644
 ----- a/.loop-engineering/ledger.tsv
 --+++ b/.loop-engineering/ledger.tsv
---@@ -1 +1,3 @@
--- iteration	action	verdict	progress	evidence	justification
+--@@ -2,3 +2,5 @@ iteration	action	verdict	progress	evidence	justification
+-- 001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
+-- 002	configured-gates	failed	0	iterations/002/eval.log	required gate failed
+-- 003	configured-gates	failed	0	iterations/003/eval.log	required gate failed
 --+001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
 --+002	configured-gates	failed	0	iterations/002/eval.log	required gate failed
 -diff --git a/.loop-engineering/ledger.tsv b/.loop-engineering/ledger.tsv
--index 58d34e4..b99c282 100644
+-index 3bfd30d..f003882 100644
 ---- a/.loop-engineering/ledger.tsv
 -+++ b/.loop-engineering/ledger.tsv
--@@ -2,3 +2,5 @@ iteration	action	verdict	progress	evidence	justification
+-@@ -5,3 +5,5 @@ iteration	action	verdict	progress	evidence	justification
 - 001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
 - 002	configured-gates	failed	0	iterations/002/eval.log	required gate failed
 - 003	configured-gates	failed	0	iterations/003/eval.log	required gate failed
 -+001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
 -+002	configured-gates	failed	0	iterations/002/eval.log	required gate failed
 diff --git a/.loop-engineering/ledger.tsv b/.loop-engineering/ledger.tsv
-index 3bfd30d..f003882 100644
+index 57b400c..7c9f7ae 100644
 --- a/.loop-engineering/ledger.tsv
 +++ b/.loop-engineering/ledger.tsv
-@@ -5,3 +5,5 @@ iteration	action	verdict	progress	evidence	justification
+@@ -8,3 +8,5 @@ iteration	action	verdict	progress	evidence	justification
  001	configured-gates	failed	0	iterations/001/eval.log	required gate failed
  002	configured-gates	failed	0	iterations/002/eval.log	required gate failed
  003	configured-gates	failed	0	iterations/003/eval.log	required gate failed
