@@ -2,25 +2,25 @@
 
 ## Verdict
 
-not-run
+blocked
 
 ## Completed
 
-- none
+- configured loop run completed through iteration 3
 
 ## Verification
 
-- passed: none
+- passed: tests, diff_check, tests, diff_check, tests, diff_check
 - blocked: none
-- failed: none
+- failed: kujo_checks, kujo_checks, kujo_checks
 
 ## Commits
 
-- none
+- Loop engineering: Audit HLP-001 write_text for native write_file_atomic replacement while preserving parent creation, redaction, and audit semantics; classify policy-bearing behavior honestly.
 
 ## Remaining
 
-- configure objective/checklist_file in loop.yml
+- none
 
 ## External Blockers
 
@@ -28,4 +28,4 @@ not-run
 
 ## Next Start
 
-- scripts/run-workflow.sh --config .loop-engineering/loop.yml
+- repeated-failure: required gate failed 3 times
