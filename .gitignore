@@ -7,4 +7,4 @@ transcript.redacted.md
 transcript.report.json
 *.tmp
 *.log
-
+.loop-engineering/
