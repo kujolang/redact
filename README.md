@@ -62,3 +62,12 @@ silently overwritten.
 ```bash
 bash tests/run.sh
 ```
+
+## Launch readiness
+
+Current launch scope: locally verified technical preview. The 2026-07-28 next
+batch proof passes the Kujo check, deterministic test suite, fixture
+scan/sanitize/verify path, and formatting check. Redact does not claim complete
+PII removal, compliance guarantees, target-domain privacy signoff, or
+production/enterprise readiness. See
+[`docs/launch-checklist.md`](docs/launch-checklist.md).
