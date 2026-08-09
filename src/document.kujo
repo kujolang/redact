@@ -1,32 +1,77 @@
-from src.util import read_text, content_hash, ext_of
+from src.util import content_hash, ext_of, path_has_symlink_component, path_has_traversal, read_text
+
+export MAX_INPUT_BYTES := 1048576
+export MAX_OUTPUT_BYTES := 2097152
 
 export func load_document(path) {
     if path == "-" {
-        return {"ok": false, "error": "stdin is part of the Redact contract, but this Kujo runtime does not expose stdin reads yet; pass a file path for this MVP build"}
+        return {"ok": false, "error": "stdin input ('-') is not supported in Redact 1.0; pass a local .txt or .md file path"}
     }
-    loaded := read_text(path)
-    if loaded["ok"] == false {
-        return loaded
-    }
-    ext := ext_of(path)
-    input_type := "text"
-    if ext == ".md" {
-        input_type = "markdown"
-    }
-    if ext != ".txt" && ext != ".md" {
-        return {"ok": false, "error": "unsupported input type for MVP: " + path}
-    }
-    text := loaded["text"]
-    return {
-        "ok": true,
-        "document": {
-            "source_path": path,
-            "input_type": input_type,
-            "content": text,
-            "content_hash": content_hash(text),
-            "metadata": {"safe": true},
-            "warnings": []
-        }
+if path_has_traversal(path) {
+    return {"ok": false, "error": "input path must not contain path traversal segments: " + path}
+}
+if path_has_symlink_component(path) {
+    return {"ok": false, "error": "input path must not contain symbolic links: " + path}
+}
+if file_exists(path)&&path_is_file(path) == false {
+    return {"ok": false, "error": "input path is not a regular file: " + path}
+}
+if file_exists(path)&&file_size(path) > MAX_INPUT_BYTES {
+    return {"ok": false, "error": "input exceeds the 1048576-byte Redact 1.0 limit: " + path}
+}
+loaded := read_text(path)
+if loaded["ok"] == false {
+    return loaded
+}
+ext := ext_of(path)
+input_type := "text"
+if ext == ".md" {
+    input_type = "markdown"
+}
+if ext != ".txt"&&ext != ".md" {
+    return {"ok": false, "error": "unsupported input type; Redact 1.0 accepts only .txt and .md files: " + path}
+}
+text := loaded["text"]
+return {
+    "ok": true,
+    "document": {
+        "source_path": path,
+        "input_type": input_type,
+        "content": text,
+        "content_hash": content_hash(text),
+        "metadata": {"safe": true},
+        "warnings": []
     }
 }
+}
 
+export func validate_output_path(input_path, output_path) {
+    if output_path == ""||output_path == "-" {
+        return {"ok": false, "error": "output must be a local file path"}
+    }
+if path_has_traversal(output_path) {
+    return {"ok": false, "error": "output path must not contain path traversal segments: " + output_path}
+}
+if path_has_symlink_component(output_path) {
+    return {"ok": false, "error": "output path must not contain symbolic links: " + output_path}
+}
+if path_exists(output_path)&&path_is_dir(output_path) {
+    return {"ok": false, "error": "output path is a directory: " + output_path}
+}
+if output_path == input_path {
+    return {"ok": false, "error": "refusing to overwrite the source file: " + input_path}
+}
+if path_exists(output_path)&&path_exists(input_path) {
+    if path_absolute(output_path) == path_absolute(input_path) {
+        return {"ok": false, "error": "refusing to overwrite the source file through an alias: " + output_path}
+    }
+}
+return {"ok": true}
+}
+
+export func validate_output_content(content) {
+    if len(content) > MAX_OUTPUT_BYTES {
+        return {"ok": false, "error": "transformed output exceeds the 2097152-byte Redact 1.0 limit"}
+    }
+return {"ok": true}
+}

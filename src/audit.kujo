@@ -1,38 +1,91 @@
 from src.util import ensure_dir, append_text, json_line, content_hash
+from src.version import AUDIT_SCHEMA_VERSION, PRODUCT_VERSION
 
-export func audit_start(root, command, input_path, policy) {
-    run_id := format_date(now_unix(), "YYYY-MM-DD-HH-mm-ssZ")
+export func audit_start(root, command, input_path, policy, unsafe_store_originals) {
+    run_id := format_date(now_unix(), "YYYY-MM-DD-HH-mm-ssZ") + "-" + substring(replace(uuid_v4(), "-", ""), 0, 12)
     run_dir := root + "/runs/" + run_id
     ensure_dir(run_dir)
     run := {
         "tool": "redact",
-        "version": "0.1.0",
+        "productVersion": PRODUCT_VERSION,
+        "schemaVersion": AUDIT_SCHEMA_VERSION,
         "run_id": run_id,
         "command": command,
         "input": input_path,
         "policy": policy["name"],
         "started_at": run_id,
         "local_first": true,
-        "deterministic": true
+        "deterministic": true,
+        "unsafeOriginalsStored": unsafe_store_originals
     }
-    write_file_atomic(run_dir + "/run.json", to_json_pretty(run), true)
-    write_file_atomic(run_dir + "/policy.snapshot.yaml", policy["raw"], true)
-    write_file_atomic(run_dir + "/detections.jsonl", "", true)
-    write_file_atomic(run_dir + "/decisions.jsonl", "", true)
-    write_file_atomic(run_dir + "/transformations.jsonl", "", true)
-    write_file_atomic(run_dir + "/warnings.jsonl", "", true)
-    return {"ok": true, "run_dir": run_dir, "run_id": run_id}
+write_file_atomic(run_dir + "/run.json", to_json_pretty(run), true)
+write_file_atomic(run_dir + "/policy.snapshot.yaml", safe_policy_snapshot(policy), true)
+write_file_atomic(run_dir + "/detections.jsonl", "", true)
+write_file_atomic(run_dir + "/decisions.jsonl", "", true)
+write_file_atomic(run_dir + "/transformations.jsonl", "", true)
+write_file_atomic(run_dir + "/warnings.jsonl", "", true)
+if unsafe_store_originals {
+    append_text(run_dir + "/warnings.jsonl", json_line({
+        "warning": "DANGER: --unsafe-store-originals stored raw detected values in detections.jsonl; isolate and delete this audit run after review"
+    }))
+}
+return {"ok": true, "run_dir": run_dir, "run_id": run_id}
+}
+
+func safe_policy_snapshot(policy) {
+    categories := [
+    "person_names",
+    "company_names",
+    "customer_names",
+    "product_names",
+    "emails",
+    "phone_numbers",
+    "payment_details",
+    "api_keys",
+    "domains",
+    "exact_dates",
+    "money_amounts",
+    "launch_strategy"
+    ]
+    mut out := "schemaVersion: redact-policy-snapshot/v1\n"
+    out = out + "policySchemaVersion: " + policy["schemaVersion"] + "\n"
+    out = out + "name: " + policy["name"] + "\n"
+    out = out + "sourcePolicySha256: " + content_hash(policy["raw"]) + "\n"
+    out = out + "configuredTermCount: " + to_string(configured_term_count(policy)) + "\n"
+    out = out + "roleMappingCount: " + to_string(len(keys(policy["roles"]))) + "\n"
+    mut i := 0
+    while i < len(categories) {
+        key := categories[i]
+        out = out + key + ": " + policy[key] + "\n"
+        i = i + 1
+    }
+out = out + "preserve_task_structure: " + to_string(policy["preserve_task_structure"]) + "\n"
+out = out + "write_entity_map: false\n"
+out = out + "ai_assist: false\n"
+return out
+}
+
+func configured_term_count(policy) {
+    term_categories := ["person_names", "company_names", "customer_names", "product_names", "launch_strategy"]
+    mut total := 0
+    mut i := 0
+    while i < len(term_categories) {
+        total = total + len(policy["terms"][term_categories[i]])
+        i = i + 1
+    }
+return total
 }
 
 export func audit_input(run_dir, doc) {
     manifest := {
+        "schemaVersion": "redact-input-manifest/v1",
         "source_path": doc["source_path"],
         "input_type": doc["input_type"],
         "content_hash": doc["content_hash"],
         "length": len(doc["content"]),
         "warnings": doc["warnings"]
     }
-    write_file_atomic(run_dir + "/input-manifest.json", to_json_pretty(manifest), true)
+write_file_atomic(run_dir + "/input-manifest.json", to_json_pretty(manifest), true)
 }
 
 export func audit_detections(run_dir, detections, unsafe_store_originals) {
@@ -49,12 +102,12 @@ export func audit_detections(run_dir, detections, unsafe_store_originals) {
             "reason": d["reason"],
             "suggested_action": d["suggested_action"]
         }
-        if unsafe_store_originals {
-            entry["original"] := d["value"]
-        }
-        append_text(run_dir + "/detections.jsonl", json_line(entry))
-        i = i + 1
+    if unsafe_store_originals {
+        entry["original"] := d["value"]
     }
+append_text(run_dir + "/detections.jsonl", json_line(entry))
+i = i + 1
+}
 }
 
 export func audit_decisions(run_dir, decisions) {
@@ -79,14 +132,15 @@ export func audit_verify(run_dir, report) {
 
 export func audit_output(run_dir, out_path, content) {
     manifest := {
+        "schemaVersion": "redact-output-manifest/v1",
         "output_path": out_path,
         "content_hash": content_hash(content),
         "length": len(content)
     }
-    write_file_atomic(run_dir + "/output-manifest.json", to_json_pretty(manifest), true)
-    write_file_atomic(run_dir + "/hashes.json", to_json_pretty({
-        "output": content_hash(content)
-    }), true)
+write_file_atomic(run_dir + "/output-manifest.json", to_json_pretty(manifest), true)
+write_file_atomic(run_dir + "/hashes.json", to_json_pretty({
+    "output": content_hash(content)
+}), true)
 }
 
 export func audit_warnings(run_dir, warnings) {

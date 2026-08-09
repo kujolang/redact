@@ -1,19 +1,20 @@
-from src.util import lines_of, read_text, get_or
+from src.util import get_or, lines_of, path_has_symlink_component, path_has_traversal, read_text
+from src.version import POLICY_SCHEMA_VERSION
 
 func default_categories() {
     return [
-        "person_names",
-        "company_names",
-        "customer_names",
-        "product_names",
-        "emails",
-        "phone_numbers",
-        "payment_details",
-        "api_keys",
-        "domains",
-        "exact_dates",
-        "money_amounts",
-        "launch_strategy"
+    "person_names",
+    "company_names",
+    "customer_names",
+    "product_names",
+    "emails",
+    "phone_numbers",
+    "payment_details",
+    "api_keys",
+    "domains",
+    "exact_dates",
+    "money_amounts",
+    "launch_strategy"
     ]
 }
 
@@ -26,23 +27,36 @@ export func load_policy(ref) {
     if file_exists(path) == false {
         path = built_in_path(ref)
     }
-    loaded := read_text(path)
-    if loaded["ok"] == false {
-        return {"ok": false, "error": "policy not found: " + ref}
-    }
-    parsed := parse_policy_yaml(loaded["text"])
-    if parsed["ok"] == false {
-        return parsed
-    }
-    p := parsed["policy"]
-    p["path"] := path
-    p["raw"] := loaded["text"]
-    return {"ok": true, "policy": p}
+if path_has_traversal(path) {
+    return {"ok": false, "error": "policy path must not contain path traversal segments: " + path}
+}
+if path_has_symlink_component(path) {
+    return {"ok": false, "error": "policy path must not contain symbolic links: " + path}
+}
+if file_exists(path)&&path_is_file(path) == false {
+    return {"ok": false, "error": "policy path is not a regular file: " + path}
+}
+if file_exists(path)&&file_size(path) > 262144 {
+    return {"ok": false, "error": "policy exceeds the 262144-byte Redact 1.0 limit: " + path}
+}
+loaded := read_text(path)
+if loaded["ok"] == false {
+    return {"ok": false, "error": "policy not found: " + ref}
+}
+parsed := parse_policy_yaml(loaded["text"])
+if parsed["ok"] == false {
+    return parsed
+}
+p := parsed["policy"]
+p["path"] := path
+p["raw"] := loaded["text"]
+return {"ok": true, "policy": p}
 }
 
 export func parse_policy_yaml(text) {
     mut policy := {
-        "name": "unnamed",
+        "schemaVersion": "",
+        "name": "",
         "preserve_task_structure": true,
         "write_entity_map": false,
         "ai_assist": false,
@@ -53,93 +67,240 @@ export func parse_policy_yaml(text) {
             "product_names": [],
             "launch_strategy": []
         },
-        "roles": {}
-    }
-    cats := default_categories()
-    mut ci := 0
-    while ci < len(cats) {
-        policy[cats[ci]] := "placeholder"
-        ci = ci + 1
-    }
-    policy["phone_numbers"] := "remove"
-    policy["payment_details"] := "remove"
-    policy["api_keys"] := "remove"
-    policy["exact_dates"] := "date-generalize"
-    policy["money_amounts"] := "range"
-    policy["launch_strategy"] := "generalize"
+    "roles": {}
+}
+cats := default_categories()
+mut ci := 0
+while ci < len(cats) {
+    policy[cats[ci]] := "placeholder"
+    ci = ci + 1
+}
+policy["phone_numbers"] := "remove"
+policy["payment_details"] := "remove"
+policy["api_keys"] := "remove"
+policy["exact_dates"] := "date-generalize"
+policy["money_amounts"] := "range"
+policy["launch_strategy"] := "generalize"
 
-    current_list := ""
-    current_map := ""
-    ls := lines_of(text)
-    mut i := 0
-    while i < len(ls) {
-        raw := ls[i]
-        line := trim(raw)
-        if line != "" && starts_with(line, "#") == false {
-            if starts_with(line, "- ") && current_list != "" {
-                val := trim(substring(line, 2, len(line)))
-                terms := policy["terms"]
-                arr := get_or(terms, current_list, [])
-                arr = push(arr, unquote(val))
-                terms[current_list] := arr
-                policy["terms"] := terms
-            } else if contains(line, ":") == 1 {
-                parts := split(line, ":")
-                key := trim(parts[0])
-                val := ""
-                if len(parts) > 1 {
-                    val = trim(substring(line, len(parts[0]) + 1, len(line)))
-                }
-                if key == "terms" {
-                    current_list = ""
-                    current_map = "terms"
-                } else if key == "roles" {
-                    current_list = ""
-                    current_map = "roles"
-                } else if val == "" {
-                    current_list = normalize_term_key(key)
-                    current_map = ""
-                    terms2 := policy["terms"]
-                    if has_key(terms2, current_list) == 0 {
-                        terms2[current_list] := []
-                        policy["terms"] := terms2
-                    }
-                } else if current_map == "roles" {
-                    roles := policy["roles"]
-                    roles[key] := unquote(val)
-                    policy["roles"] := roles
-                } else {
-                    current_list = ""
-                    current_map = ""
-                    policy[key] := parse_scalar(val)
-                }
-            }
-        }
+mut section := ""
+mut current_list := ""
+mut seen_top := {}
+ls := lines_of(text)
+mut i := 0
+while i < len(ls) {
+    raw := ls[i]
+    line := trim(raw)
+    if line == ""||starts_with(line, "#") {
         i = i + 1
+        continue
     }
-    if policy["name"] == "" {
-        return {"ok": false, "error": "policy name is required"}
+if contains(raw, "\t") == 1 {
+    return policy_error(i, "tabs are not supported; use spaces")
+}
+if unsupported_yaml_syntax(line) {
+    return policy_error(i, "unsupported YAML structure or feature")
+}
+indent := leading_spaces(raw)
+if indent == 0 {
+    if contains(line, ":") == 0 {
+        return policy_error(i, "expected a top-level key and value")
     }
-    return {"ok": true, "policy": policy}
+pair := key_value(line)
+key := pair["key"]
+val := pair["value"]
+if has_key(seen_top, key) == 1 {
+    return policy_error(i, "duplicate top-level key: " + key)
+}
+seen_top[key] := true
+if key == "terms"||key == "roles" {
+    if val != "" {
+        return policy_error(i, key + " must use the documented indented mapping form")
+    }
+section = key
+current_list = ""
+} else if is_legacy_term_key(key) {
+if val != "" {
+    return policy_error(i, key + " must use an indented list")
+}
+section = "legacy"
+current_list = normalize_term_key(key)
+} else {
+if val == "" {
+    return policy_error(i, "missing scalar value for: " + key)
+}
+if allowed_top_level_key(key) == false {
+    return policy_error(i, "unsupported top-level key: " + key)
+}
+policy[key] := parse_scalar(val)
+section = ""
+current_list = ""
+}
+} else if section == "terms"&&indent == 2&&starts_with(line, "- ") == false {
+pair2 := key_value(line)
+term_key := normalize_term_key(pair2["key"])
+if allowed_term_key(term_key) == false||pair2["value"] != "" {
+    return policy_error(i, "terms entries must be supported keys followed by indented lists")
+}
+current_list = term_key
+} else if section == "terms"&&indent == 4&&starts_with(line, "- ") {
+if current_list == "" {
+    return policy_error(i, "term list item has no category")
+}
+item := unquote(trim(substring(line, 2, len(line))))
+if item == "" {
+    return policy_error(i, "term list items must not be empty")
+}
+terms := policy["terms"]
+arr := get_or(terms, current_list, [])
+terms[current_list] := push(arr, item)
+policy["terms"] := terms
+} else if section == "roles"&&indent == 2&&starts_with(line, "- ") == false {
+pair3 := key_value(line)
+if pair3["key"] == ""||pair3["value"] == "" {
+    return policy_error(i, "roles entries must be scalar name-to-role mappings")
+}
+roles := policy["roles"]
+roles[unquote(pair3["key"])] := unquote(pair3["value"])
+policy["roles"] := roles
+} else if section == "legacy"&&indent == 2&&starts_with(line, "- ") {
+legacy_item := unquote(trim(substring(line, 2, len(line))))
+if legacy_item == "" {
+    return policy_error(i, "term list items must not be empty")
+}
+terms2 := policy["terms"]
+legacy_arr := get_or(terms2, current_list, [])
+terms2[current_list] := push(legacy_arr, legacy_item)
+policy["terms"] := terms2
+} else {
+return policy_error(i, "unexpected indentation or nested YAML structure")
+}
+i = i + 1
+}
+if policy["name"] == "" {
+    return {"ok": false, "error": "policy name is required"}
+}
+if policy["schemaVersion"] != POLICY_SCHEMA_VERSION {
+    return {"ok": false, "error": "policy schemaVersion must be " + POLICY_SCHEMA_VERSION}
+}
+validation := validate_policy_values(policy)
+if validation["ok"] == false {
+    return validation
+}
+return {"ok": true, "policy": policy}
+}
+
+func policy_error(index, message) {
+    return {"ok": false, "error": "policy line " + to_string(index + 1) + ": " + message}
+}
+
+func leading_spaces(raw) {
+    mut count := 0
+    while substring(raw, count, count + 1) == " " {
+        count = count + 1
+    }
+return count
+}
+
+func key_value(line) {
+    parts := split(line, ":")
+    key := trim(parts[0])
+    value := ""
+    if len(parts) > 1 {
+        value = trim(substring(line, len(parts[0]) + 1, len(line)))
+    }
+return {"key": key, "value": value}
+}
+
+func unsupported_yaml_syntax(line) {
+    if line == "---"||line == "..." {
+        return true
+    }
+if starts_with(line, "{")||starts_with(line, "[")||starts_with(line, "|")||starts_with(line, ">") {
+        return true
+    }
+if starts_with(line, "&")||starts_with(line, "- &")||contains(line, ": &") == 1 {
+    return true
+}
+if starts_with(line, "*")||starts_with(line, "- *")||contains(line, ": *") == 1 {
+    return true
+}
+if starts_with(line, "!")||starts_with(line, "- !")||contains(line, ": !") == 1 {
+    return true
+}
+return false
+}
+
+func allowed_top_level_key(key) {
+    if key == "schemaVersion"||key == "name"||key == "preserve_task_structure"||key == "write_entity_map"||key == "ai_assist" {
+        return true
+    }
+cats := default_categories()
+mut i := 0
+while i < len(cats) {
+    if cats[i] == key {
+        return true
+    }
+i = i + 1
+}
+return false
+}
+
+func allowed_term_key(key) {
+    return key == "person_names"||key == "company_names"||key == "customer_names"||key == "product_names"||key == "launch_strategy"
+}
+
+func is_legacy_term_key(key) {
+    return key == "person_dictionary"||key == "company_dictionary"||key == "customer_dictionary"||key == "product_dictionary"||key == "strategy_terms"
+}
+
+func validate_policy_values(policy) {
+    actions := ["remove", "placeholder", "role-preserve", "generalize", "range", "date-generalize"]
+    cats := default_categories()
+    mut i := 0
+    while i < len(cats) {
+        action := policy[cats[i]]
+        mut valid := false
+        mut j := 0
+        while j < len(actions) {
+            if action == actions[j] {
+                valid = true
+            }
+        j = j + 1
+    }
+if valid == false {
+    return {"ok": false, "error": "unsupported action for " + cats[i] + ": " + to_string(action)}
+}
+i = i + 1
+}
+if type(policy["preserve_task_structure"]) != "bool"||type(policy["write_entity_map"]) != "bool"||type(policy["ai_assist"]) != "bool" {
+    return {"ok": false, "error": "policy safety fields must be true or false"}
+}
+if policy["write_entity_map"] {
+    return {"ok": false, "error": "write_entity_map is not supported in Redact 1.0; set it to false"}
+}
+if policy["ai_assist"] {
+    return {"ok": false, "error": "ai_assist is not supported in Redact 1.0; set it to false"}
+}
+return {"ok": true}
 }
 
 func normalize_term_key(key) {
     if key == "person_dictionary" {
         return "person_names"
     }
-    if key == "company_dictionary" {
-        return "company_names"
-    }
-    if key == "customer_dictionary" {
-        return "customer_names"
-    }
-    if key == "product_dictionary" {
-        return "product_names"
-    }
-    if key == "strategy_terms" {
-        return "launch_strategy"
-    }
-    return key
+if key == "company_dictionary" {
+    return "company_names"
+}
+if key == "customer_dictionary" {
+    return "customer_names"
+}
+if key == "product_dictionary" {
+    return "product_names"
+}
+if key == "strategy_terms" {
+    return "launch_strategy"
+}
+return key
 }
 
 func parse_scalar(val) {
@@ -148,31 +309,31 @@ func parse_scalar(val) {
     if low == "true" {
         return true
     }
-    if low == "false" {
-        return false
-    }
-    return v
+if low == "false" {
+    return false
+}
+return v
 }
 
 func unquote(v) {
     if len(v) >= 2 {
         first := substring(v, 0, 1)
         last := substring(v, len(v) - 1, len(v))
-        if first == "\"" && last == "\"" {
+        if first == "\""&&last == "\"" {
             return substring(v, 1, len(v) - 1)
         }
-        if first == "'" && last == "'" {
-            return substring(v, 1, len(v) - 1)
-        }
+    if first == "'"&&last == "'" {
+        return substring(v, 1, len(v) - 1)
     }
-    return v
+}
+return v
 }
 
 export func policy_action(policy, category) {
     if has_key(policy, category) == 1 {
         return policy[category]
     }
-    return "placeholder"
+return "placeholder"
 }
 
 export func policy_terms(policy, category) {
@@ -180,7 +341,7 @@ export func policy_terms(policy, category) {
     if has_key(terms, category) == 1 {
         return terms[category]
     }
-    return []
+return []
 }
 
 export func policy_role(policy, value, fallback) {
@@ -188,5 +349,13 @@ export func policy_role(policy, value, fallback) {
     if has_key(roles, value) == 1 {
         return roles[value]
     }
-    return fallback
+role_names := keys(roles)
+mut i := 0
+while i < len(role_names) {
+    if to_lower(role_names[i]) == to_lower(value) {
+        return roles[role_names[i]]
+    }
+i = i + 1
+}
+return fallback
 }

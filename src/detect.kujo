@@ -1,16 +1,17 @@
-from src.util import value_hash, str_find
 from src.policy import policy_terms
+from src.util import value_hash, str_find
 
 export func detect_document(doc, policy) {
     text := doc["content"]
     mut detections := []
     detections = append_regex(detections, text, "det.email", "emails", "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "placeholder", 0.99)
     detections = append_regex(detections, text, "det.api_key", "api_keys", "\\b(?:sk-[A-Za-z0-9_-]{16,}|[A-Za-z0-9_]*(?:TOKEN|KEY|SECRET)[A-Za-z0-9_]*=[A-Za-z0-9_./-]{8,})\\b", "remove", 0.9)
-    detections = append_regex(detections, text, "det.url", "domains", "https?://[^\\s)>\"]+|\\b[A-Za-z0-9.-]+\\.(?:com|net|org|io|ai|dev|app|co|video)\\b", "placeholder", 0.9)
+    detections = append_regex(detections, text, "det.url", "domains", "https?://[^\\s)>\"]+", "placeholder", 0.92)
+    detections = append_regex(detections, text, "det.domain", "domains", "\\b[A-Za-z0-9.-]+\\.(?:com|net|org|io|ai|dev|app|co|video)\\b", "placeholder", 0.9)
     detections = append_money(detections, text)
     detections = append_dates(detections, text)
     detections = append_credit_cards(detections, text)
-    detections = append_regex(detections, text, "det.phone", "phone_numbers", "\\+?[0-9][0-9 .()\\-]{7,}[0-9]", "remove", 0.86)
+    detections = append_phones(detections, text)
     detections = append_terms(detections, text, policy_terms(policy, "person_names"), "dictionary.person", "person_names", "role-preserve")
     detections = append_terms(detections, text, policy_terms(policy, "company_names"), "dictionary.company", "company_names", "placeholder")
     detections = append_terms(detections, text, policy_terms(policy, "customer_names"), "dictionary.customer", "customer_names", "placeholder")
@@ -19,12 +20,31 @@ export func detect_document(doc, policy) {
     return {"ok": true, "detections": detections}
 }
 
-func append_terms(detections, text, terms, detector_id, category, suggested_action) {
+func append_phones(detections, text) {
+    matches := regex_find_all(text, "(?:\\+[0-9][0-9 .()\\-]{8,}[0-9]|\\b[0-9][0-9 .()\\-]{8,}[0-9]\\b)")
     mut out := detections
     mut seen := []
     mut i := 0
-    while i < len(terms) {
-        term := terms[i]
+    while i < len(matches) {
+        value := matches[i]
+        digits := only_digits(value)
+        if len(digits) >= 10&&len(digits) <= 15&&unique_seen(seen, value) == 0 {
+            start := str_find(text, value)
+            out = push(out, detection("det.phone", "phone_numbers", start, start + len(value), value, 0.86, "deterministic phone pattern match", "remove"))
+            seen = push(seen, value)
+        }
+    i = i + 1
+}
+return out
+}
+
+func append_terms(detections, text, terms, detector_id, category, suggested_action) {
+    mut out := detections
+    mut seen := []
+    ordered_terms := terms_longest_first(terms)
+    mut i := 0
+    while i < len(ordered_terms) {
+        term := ordered_terms[i]
         mut start_at := 0
         mut found := find_case_variant_from(text, term, start_at)
         while found["value"] != "" {
@@ -34,29 +54,62 @@ func append_terms(detections, text, terms, detector_id, category, suggested_acti
                 out = push(out, detection(detector_id, category, start, start + len(value), value, 1.0, "configured sensitive term", suggested_action))
                 seen = push(seen, value)
             }
-            start_at = found["start"] + len(value)
-            found = find_case_variant_from(text, term, start_at)
-        }
+        start_at = found["start"] + len(value)
+        found = find_case_variant_from(text, term, start_at)
+    }
+i = i + 1
+}
+return out
+}
+
+func terms_longest_first(terms) {
+    mut ordered := []
+    mut used := []
+    while len(ordered) < len(terms) {
+        mut best :=  - 1
+        mut best_len :=  - 1
+        mut i := 0
+        while i < len(terms) {
+            if index_used(used, i) == false&&len(terms[i]) > best_len {
+                best = i
+                best_len = len(terms[i])
+            }
         i = i + 1
     }
-    return out
+if best >= 0 {
+    ordered = push(ordered, terms[best])
+    used = push(used, best)
+}
+}
+return ordered
+}
+
+func index_used(used, index) {
+    mut i := 0
+    while i < len(used) {
+        if used[i] == index {
+            return true
+        }
+    i = i + 1
+}
+return false
 }
 
 func find_case_variant_from(text, term, start_at) {
     if term == "" {
-        return {"value": "", "start": -1}
+        return {"value": "", "start": - 1}
     }
-    low_term := to_lower(term)
-    n := len(term)
-    mut i := start_at
-    while substring(text, i, i + 1) != "" {
-        candidate := substring(text, i, i + n)
-        if to_lower(candidate) == low_term {
-            return {"value": candidate, "start": i}
-        }
-        i = i + 1
+low_term := to_lower(term)
+n := len(term)
+mut i := start_at
+while substring(text, i, i + 1) != "" {
+    candidate := substring(text, i, i + n)
+    if to_lower(candidate) == low_term {
+        return {"value": candidate, "start": i}
     }
-    return {"value": "", "start": -1}
+i = i + 1
+}
+return {"value": "", "start": - 1}
 }
 
 func append_regex(detections, text, detector_id, category, pattern, suggested_action, confidence) {
@@ -66,14 +119,14 @@ func append_regex(detections, text, detector_id, category, pattern, suggested_ac
     mut i := 0
     while i < len(matches) {
         value := matches[i]
-        if value != "" && unique_seen(seen, value) == 0 {
+        if value != ""&&unique_seen(seen, value) == 0 {
             start := str_find(text, value)
             out = push(out, detection(detector_id, category, start, start + len(value), value, confidence, "deterministic pattern match", suggested_action))
             seen = push(seen, value)
         }
-        i = i + 1
-    }
-    return out
+    i = i + 1
+}
+return out
 }
 
 func append_money(detections, text) {
@@ -95,14 +148,14 @@ func append_credit_cards(detections, text) {
     while i < len(matches) {
         value := matches[i]
         digits := only_digits(value)
-        if len(digits) >= 13 && len(digits) <= 19 && luhn_valid(digits) && unique_seen(seen, value) == 0 {
+        if len(digits) >= 13&&len(digits) <= 19&&luhn_valid(digits)&&unique_seen(seen, value) == 0 {
             start := str_find(text, value)
             out = push(out, detection("det.credit_card.luhn", "payment_details", start, start + len(value), value, 0.99, "credit card candidate passed Luhn validation", "remove"))
             seen = push(seen, value)
         }
-        i = i + 1
-    }
-    return out
+    i = i + 1
+}
+return out
 }
 
 func detection(detector_id, category, start, end, value, confidence, reason, suggested_action) {
@@ -125,9 +178,9 @@ func unique_seen(arr, value) {
         if arr[i] == value {
             return 1
         }
-        i = i + 1
-    }
-    return 0
+    i = i + 1
+}
+return 0
 }
 
 func only_digits(value) {
@@ -135,25 +188,25 @@ func only_digits(value) {
     mut i := 0
     while i < len(value) {
         ch := substring(value, i, i + 1)
-        if ch >= "0" && ch <= "9" {
+        if ch >= "0"&&ch <= "9" {
             out = out + ch
         }
-        i = i + 1
-    }
-    return out
+    i = i + 1
+}
+return out
 }
 
 func digit_value(ch) {
-    if ch == "0" { return 0 }
-    if ch == "1" { return 1 }
-    if ch == "2" { return 2 }
-    if ch == "3" { return 3 }
-    if ch == "4" { return 4 }
-    if ch == "5" { return 5 }
-    if ch == "6" { return 6 }
-    if ch == "7" { return 7 }
-    if ch == "8" { return 8 }
-    if ch == "9" { return 9 }
+    if ch == "0" {return 0}
+    if ch == "1" {return 1}
+    if ch == "2" {return 2}
+    if ch == "3" {return 3}
+    if ch == "4" {return 4}
+    if ch == "5" {return 5}
+    if ch == "6" {return 6}
+    if ch == "7" {return 7}
+    if ch == "8" {return 8}
+    if ch == "9" {return 9}
     return 0
 }
 
@@ -168,10 +221,10 @@ func luhn_valid(digits) {
             if d > 9 {
                 d = d - 9
             }
-        }
-        sum = sum + d
-        alt = alt == false
-        i = i - 1
     }
-    return sum % 10 == 0
+sum = sum + d
+alt = alt == false
+i = i - 1
+}
+return sum % 10 == 0
 }

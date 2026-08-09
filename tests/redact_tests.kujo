@@ -1,7 +1,8 @@
-from src.policy import load_policy
-from src.document import load_document
 from src.detect import detect_document
+from src.document import load_document
+from src.policy import load_policy, parse_policy_yaml
 from src.transform import transform_document
+from src.util import read_text
 from src.verify import verify_document
 
 func assert_true(cond, message) {
@@ -11,10 +12,45 @@ func assert_true(cond, message) {
     }
 }
 
+func memory_document(content) {
+    return {
+        "source_path": "synthetic.txt",
+        "input_type": "text",
+        "content": content,
+        "content_hash": sha256(content),
+        "metadata": {"safe": true},
+        "warnings": []
+    }
+}
+
+func category_count(detections, category) {
+    mut count := 0
+    mut i := 0
+    while i < len(detections) {
+        if detections[i]["category"] == category {
+            count = count + 1
+        }
+    i = i + 1
+}
+return count
+}
+
+func detection_has_value(detections, value) {
+    mut i := 0
+    while i < len(detections) {
+        if detections[i]["value"] == value {
+            return true
+        }
+    i = i + 1
+}
+return false
+}
+
 policy_res := load_policy("fixtures/sample.policy.yaml")
 assert_true(policy_res["ok"], "policy loads")
 policy := policy_res["policy"]
 assert_true(policy["name"] == "fixture-safe", "policy name")
+assert_true(policy["schemaVersion"] == "redact-policy/v1", "policy schema version")
 
 doc_res := load_document("fixtures/sample.md")
 assert_true(doc_res["ok"], "fixture document loads")
@@ -22,14 +58,58 @@ doc := doc_res["document"]
 
 det := detect_document(doc, policy)
 assert_true(len(det["detections"]) >= 8, "detectors find configured and pattern leakage")
+assert_true(category_count(det["detections"], "emails") == 1, "email detected")
+assert_true(category_count(det["detections"], "phone_numbers") == 1, "phone detected")
+assert_true(category_count(det["detections"], "payment_details") == 1, "valid Luhn card detected")
+assert_true(category_count(det["detections"], "api_keys") == 1, "API token detected")
+assert_true(category_count(det["detections"], "exact_dates") == 1, "date detected")
+assert_true(category_count(det["detections"], "money_amounts") == 1, "money detected")
 
 tx := transform_document(doc, det["detections"], policy)
 out := tx["document"]["content"]
-expected := read_file("fixtures/sample.redacted.md")
+expected_result := read_text("fixtures/sample.redacted.md")
+assert_true(expected_result["ok"], "expected fixture loads")
+expected := expected_result["text"]
 assert_true(out == expected, "transformed fixture matches snapshot")
 
 report := verify_document(tx["document"], policy)
 assert_true(report["risk_score"] == "low", "verified output is low risk")
+assert_true(report["schemaVersion"] == "redact-verifier/v1", "verifier schema is explicit")
+assert_true(verify_document(doc, policy)["risk_score"] == "high", "raw input verifies high risk")
+
+card_doc := memory_document("Valid 4111 1111 1111 1111 invalid 4111 1111 1111 1112")
+card_det := detect_document(card_doc, policy)["detections"]
+assert_true(detection_has_value(card_det, "4111 1111 1111 1111"), "valid Luhn candidate detected")
+assert_true(detection_has_value(card_det, "4111 1111 1111 1112") == false, "invalid Luhn candidate is not classified as card or phone")
+
+mixed_policy := policy
+mixed_terms := mixed_policy["terms"]
+mixed_terms["person_names"] := ["Morgan Example", "Jelena Janić"]
+mixed_policy["terms"] := mixed_terms
+mixed_policy["roles"] := {"Morgan Example": "research lead"}
+mixed_doc := memory_document("mOrGaN eXaMpLe and Jelena Janić; confusable Jelena Janiс")
+mixed_det := detect_document(mixed_doc, mixed_policy)
+mixed_out := transform_document(mixed_doc, mixed_det["detections"], mixed_policy)["document"]["content"]
+assert_true(contains(mixed_out, "[RESEARCH_LEAD]") == 1, "mixed-case configured identifier uses role mapping")
+assert_true(contains(mixed_out, "[PERSON_2]") == 1, "configured Unicode identifier is transformed")
+assert_true(contains(mixed_out, "Jelena Janiс") == 1, "documented confusable near-miss remains for human review")
+
+overlap_policy := policy
+overlap_terms := overlap_policy["terms"]
+overlap_terms["product_names"] := ["Project", "Project Lantern"]
+overlap_policy["terms"] := overlap_terms
+overlap_doc := memory_document("Project Lantern repeats: Project Lantern; standalone Project.")
+overlap_det := detect_document(overlap_doc, overlap_policy)
+overlap_out := transform_document(overlap_doc, overlap_det["detections"], overlap_policy)["document"]["content"]
+assert_true(contains(overlap_out, "Lantern") == 0, "longest configured term wins overlapping transformation")
+assert_true(contains(overlap_out, "Project") == 0, "repeated and standalone configured values transform")
+assert_true(to_json(overlap_det) == to_json(detect_document(overlap_doc, overlap_policy)), "detection ordering is deterministic")
+
+unsupported := load_policy("fixtures/unsupported-nested.policy.yaml")
+assert_true(unsupported["ok"] == false, "nested policy fails clearly")
+malformed := load_policy("fixtures/malformed.policy.yaml")
+assert_true(malformed["ok"] == false, "malformed policy fails clearly")
+missing_schema := parse_policy_yaml("name: missing-schema\n")
+assert_true(missing_schema["ok"] == false, "missing policy schema fails clearly")
 
 print("redact kujo tests passed")
-

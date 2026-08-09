@@ -2,16 +2,16 @@ export func truthy(v) {
     if type(v) == "bool" {
         return v
     }
-    if type(v) == "int" {
-        return v != 0
-    }
-    if type(v) == "null" {
-        return false
-    }
-    if type(v) == "string" {
-        return v != ""
-    }
-    return true
+if type(v) == "int" {
+    return v != 0
+}
+if type(v) == "null" {
+    return false
+}
+if type(v) == "string" {
+    return v != ""
+}
+return true
 }
 
 export func list_includes(arr, value) {
@@ -20,16 +20,16 @@ export func list_includes(arr, value) {
         if arr[i] == value {
             return true
         }
-        i = i + 1
-    }
-    return false
+    i = i + 1
+}
+return false
 }
 
 export func get_or(dict, key, fallback) {
     if has_key(dict, key) == 1 {
         return dict[key]
     }
-    return fallback
+return fallback
 }
 
 export func lines_of(text) {
@@ -41,21 +41,101 @@ export func lines_of(text) {
         if ends_with(line, "\r") {
             out = push(out, substring(line, 0, len(line) - 1))
         } else {
-            out = push(out, line)
-        }
-        i = i + 1
+        out = push(out, line)
     }
-    return out
+i = i + 1
+}
+return out
 }
 
 export func read_text(path) {
     if file_exists(path) == false {
         return {"ok": false, "error": "file not found: " + path}
     }
-    if path_is_dir(path) {
-        return {"ok": false, "error": "path is a directory: " + path}
+if path_is_dir(path) {
+    return {"ok": false, "error": "path is a directory: " + path}
+}
+mut loaded := ""
+try {
+    loaded = read_file(path)
+} except err {
+return {"ok": false, "error": "file is not valid UTF-8 or cannot be read: " + path}
+}
+if type(loaded) != "string" {
+    return {"ok": false, "error": "file is not valid UTF-8 or cannot be read: " + path}
+}
+return {"ok": true, "text": loaded}
+}
+
+export func path_has_traversal(path) {
+    if type(path) != "string" {
+        return true
     }
-    return {"ok": true, "text": read_file(path)}
+normalized := replace(path, "\\", "/")
+parts := split(normalized, "/")
+mut i := 0
+while i < len(parts) {
+    if parts[i] == ".." {
+        return true
+    }
+i = i + 1
+}
+return false
+}
+
+export func path_has_symlink_component(path) {
+    if type(path) != "string"||path == "" {
+        return false
+    }
+mut absolute := replace(path, "\\", "/")
+if starts_with(absolute, "/") == false {
+    absolute = os_getcwd() + "/" + absolute
+}
+parts := split(absolute, "/")
+mut current := ""
+if starts_with(absolute, "/") {
+    current = "/"
+}
+mut i := 0
+while i < len(parts) {
+    part := parts[i]
+    if part != ""&&part != "." {
+        if current == "" {
+            current = part
+        } else if current == "/" {
+        current = current + part
+    } else {
+    current = current + "/" + part
+}
+mut is_link := false
+try {
+    is_link = path_is_symlink(current)
+} except err {
+is_link = false
+}
+if is_link&&current != "/tmp"&&current != "/var" {
+    return true
+}
+}
+i = i + 1
+}
+return false
+}
+
+export func validate_directory_target(path, label) {
+    if path == ""||path == "/" {
+        return {"ok": false, "error": label + " must be a specific directory path"}
+    }
+if path_has_traversal(path) {
+    return {"ok": false, "error": label + " must not contain path traversal segments: " + path}
+}
+if path_has_symlink_component(path) {
+    return {"ok": false, "error": label + " must not contain symbolic links: " + path}
+}
+if path_exists(path)&&path_is_dir(path) == false {
+    return {"ok": false, "error": label + " is not a directory: " + path}
+}
+return {"ok": true}
 }
 
 export func append_text(path, content) {
@@ -63,38 +143,38 @@ export func append_text(path, content) {
     if parent != "" {
         ensure_dir(parent)
     }
-    append_file(path, content)
+append_file(path, content)
 }
 
 export func ensure_dir(path) {
-    if path == "" || path == "." {
+    if path == ""||path == "." {
         return
     }
-    if path_is_dir(path) {
-        return
-    }
-    parts := split(path, "/")
-    mut cur := ""
-    if starts_with(path, "/") {
-        cur = "/"
-    }
-    mut i := 0
-    while i < len(parts) {
-        part := parts[i]
-        if part != "" && part != "." {
-            if cur == "/" {
-                cur = "/" + part
-            } else if cur == "" {
-                cur = part
-            } else {
-                cur = cur + "/" + part
-            }
-            if path_is_dir(cur) == false {
-                create_dir(cur)
-            }
-        }
-        i = i + 1
-    }
+if path_is_dir(path) {
+    return
+}
+parts := split(path, "/")
+mut cur := ""
+if starts_with(path, "/") {
+    cur = "/"
+}
+mut i := 0
+while i < len(parts) {
+    part := parts[i]
+    if part != ""&&part != "." {
+        if cur == "/" {
+            cur = "/" + part
+        } else if cur == "" {
+        cur = part
+    } else {
+    cur = cur + "/" + part
+}
+if path_is_dir(cur) == false {
+    create_dir(cur)
+}
+}
+i = i + 1
+}
 }
 
 export func parent_of(path) {
@@ -103,9 +183,9 @@ export func parent_of(path) {
         if substring(path, i, i + 1) == "/" {
             return substring(path, 0, i)
         }
-        i = i - 1
-    }
-    return ""
+    i = i - 1
+}
+return ""
 }
 
 export func base_of(path) {
@@ -114,9 +194,9 @@ export func base_of(path) {
         if substring(path, i, i + 1) == "/" {
             return substring(path, i + 1, len(path))
         }
-        i = i - 1
-    }
-    return path
+    i = i - 1
+}
+return path
 }
 
 export func ext_of(path) {
@@ -126,9 +206,9 @@ export func ext_of(path) {
         if substring(name, i, i + 1) == "." {
             return substring(name, i, len(name))
         }
-        i = i - 1
-    }
-    return ""
+    i = i - 1
+}
+return ""
 }
 
 export func content_hash(text) {
@@ -143,39 +223,39 @@ export func replace_all_text(text, needle, replacement) {
     if needle == "" {
         return text
     }
-    parts := split(text, needle)
-    if len(parts) == 1 {
-        return text
-    }
-    mut out := parts[0]
-    mut i := 1
-    while i < len(parts) {
-        out = out + replacement + parts[i]
-        i = i + 1
-    }
-    return out
+parts := split(text, needle)
+if len(parts) == 1 {
+    return text
+}
+mut out := parts[0]
+mut i := 1
+while i < len(parts) {
+    out = out + replacement + parts[i]
+    i = i + 1
+}
+return out
 }
 
 export func count_substr(text, needle) {
     if needle == "" {
         return 0
     }
-    return len(split(text, needle)) - 1
+return len(split(text, needle)) - 1
 }
 
 export func str_find_from(text, needle, start_at) {
     if needle == "" {
-        return -1
+        return - 1
     }
-    nlen := len(needle)
-    mut i := start_at
-    while substring(text, i, i + 1) != "" {
-        if substring(text, i, i + nlen) == needle {
-            return i
-        }
-        i = i + 1
+nlen := len(needle)
+mut i := start_at
+while substring(text, i, i + 1) != "" {
+    if substring(text, i, i + nlen) == needle {
+        return i
     }
-    return -1
+i = i + 1
+}
+return - 1
 }
 
 export func str_find(text, needle) {
@@ -190,5 +270,5 @@ export func unique_push(arr, value) {
     if list_includes(arr, value) {
         return arr
     }
-    return push(arr, value)
+return push(arr, value)
 }
