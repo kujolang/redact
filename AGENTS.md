@@ -1,35 +1,47 @@
 # Redact Agent Instructions
 
-Redact is a local deterministic anonymization pipeline. Treat it as a reviewable redaction aid, not a guarantee that no sensitive data remains.
+Redact 1.x is a deterministic local redaction aid. Never claim complete PII
+detection, guaranteed sensitive-value removal, legal/regulatory compliance,
+arbitrary-domain fitness, replacement of human review, production certification,
+or AI semantic detection.
 
-## Required Reading
+## Required reading
 
 - `README.md`
+- `CHANGELOG.md`
+- `SECURITY.md`
 - `docs/security.md`
 - `docs/architecture.md`
 - `docs/launch-checklist.md`
-- `redact.kujo`
-- Relevant `src/*.kujo` and `tests/*.kujo`
+- `docs/release-process.md`
+- `docs/domain-signoff/README.md`
+- `redact.kujo`, `src/*.kujo`, and relevant tests
 
 ## Validation
 
-Set `KUJO_BIN` to the intended Kujo runtime.
+Use the released Kujo runtime identified by `RUNTIME_VERSION`.
 
 ```bash
-"$KUJO_BIN" check redact.kujo
-bash tests/run.sh
-"$KUJO_BIN" run redact.kujo scan fixtures/sample.md --policy fixtures/sample.policy.yaml
-"$KUJO_BIN" run redact.kujo sanitize fixtures/sample.md --policy fixtures/sample.policy.yaml --out /tmp/redact-sample.redacted.md
-"$KUJO_BIN" run redact.kujo verify /tmp/redact-sample.redacted.md --policy fixtures/sample.policy.yaml
-git diff --check
+export KUJO_BIN=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/kujo
+"$KUJO_BIN" --version
+bash scripts/verify-all.sh
 ```
 
-## Evidence Rules
+An exact release candidate also requires Workcell proof plus receipt
+verification, ShipCheck exit code `0`, and a passing hosted Verification run.
 
-- Preserve verifier reports, audit paths, policy snapshots, and command logs for launch proof.
-- Do not commit `.redact/runs/` or generated redacted packs unless the task explicitly asks for a proof fixture.
-- Workcell proof is required for this launch batch unless a blocker receipt documents the Docker/host blocker and closest equivalent proof.
+## Evidence and safety
 
-## Prohibited Without Approval
+- Use only synthetic values in fixtures, tests, examples, and committed proof.
+- Do not commit `.redact/runs`, sanitized packs, transcripts, generated release
+  artifacts, reports, Workcell evidence, or temporary files.
+- Treat audit paths, hashes, policy names, and counts as sensitive metadata.
+- `--unsafe-store-originals` is hazardous and never a normal workflow.
+- Unsupported YAML must fail clearly; never broaden it silently.
+- Human domain privacy/security signoff cannot be self-approved by an agent.
 
-Do not use live AI/provider credentials, publish packages, create public releases, push final tags, deploy hosted services, alter branch protection, force-push, rewrite history, or claim complete PII removal/compliance guarantees.
+## Prohibited without approval
+
+Do not use live provider credentials, publish packages, create or push release
+tags, create GitHub releases, deploy services, modify branch protection, bypass
+hosted controls, force-push, rewrite history, or make compliance guarantees.

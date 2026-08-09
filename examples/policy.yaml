@@ -1,0 +1,30 @@
+schemaVersion: redact-policy/v1
+name: example-safe
+person_names: role-preserve
+company_names: placeholder
+customer_names: placeholder
+product_names: placeholder
+emails: placeholder
+phone_numbers: remove
+payment_details: remove
+api_keys: remove
+domains: placeholder
+exact_dates: date-generalize
+money_amounts: range
+launch_strategy: generalize
+preserve_task_structure: true
+write_entity_map: false
+ai_assist: false
+terms:
+  person_names:
+    - Morgan Example
+  company_names:
+    - Example Research Cooperative
+  customer_names:
+    - Demo Customer
+  product_names:
+    - Project Lantern
+  launch_strategy:
+    - synthetic beta plan
+roles:
+  Morgan Example: research lead

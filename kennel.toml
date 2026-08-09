@@ -1,0 +1,36 @@
+[package]
+name = "redact"
+version = "1.0.0"
+description = "Deterministic local-first redaction aid for text and Markdown."
+license = "MIT"
+authors = ["Kujolang <me@kujolang.ai>"]
+repository = "https://github.com/kujolang/redact"
+homepage = "https://github.com/kujolang/redact"
+keywords = ["kujo", "redaction", "privacy", "security", "local-first"]
+categories = ["developer-tools", "command-line-utilities"]
+readme = "README.md"
+
+[package.status]
+stage = "production"
+stability = "stable"
+public_api = true
+notes = "Stable 1.x CLI, flat-policy, deterministic detector, transform, verifier, audit, and pack contracts within the documented privacy boundary."
+
+[kujo]
+minimum_version = "1.0.0"
+entry = "redact.kujo"
+sources = ["src", "."]
+includes = ["VERSION", "LICENSE", "README.md", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md", "policies", "examples", "fixtures", "docs", "tests", "scripts"]
+excludes = [".git", ".github", ".redact", ".workcell", ".loop-engineering", ".kennel_tmp", "kennel_packages", "dist", "build", "out", "tmp", "*.redacted.md", "*.redacted.txt"]
+
+[scripts]
+test = "bash tests/run.sh"
+verify = "bash scripts/verify-all.sh"
+smoke = "bash tests/examples_smoke.sh"
+
+[dependencies]
+
+[trust]
+checksum = ""
+signature = ""
+signing_key = ""
