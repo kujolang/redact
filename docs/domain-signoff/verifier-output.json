@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "redact-verifier/v1",
+  "productVersion": "1.0.0",
+  "risk_score": "low",
+  "reason": "no deterministic leakage checks fired",
+  "remaining_emails": 0,
+  "remaining_phone_numbers": 0,
+  "remaining_urls_or_domains": 0,
+  "remaining_api_key_patterns": 0,
+  "remaining_payment_details": 0,
+  "remaining_exact_dates": 0,
+  "remaining_money_amounts": 0,
+  "unresolved_configured_terms": 0,
+  "warnings": []
+}

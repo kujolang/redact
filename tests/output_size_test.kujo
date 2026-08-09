@@ -1,0 +1,27 @@
+from src.document import validate_output_content
+from src.util import read_text
+
+paths := args()
+if len(paths) != 2 {
+    print("FAIL: output_size_test expects normal and oversized fixture paths")
+    exit(1)
+}
+
+normal_result := read_text(paths[0])
+oversized_result := read_text(paths[1])
+if normal_result["ok"] == false||oversized_result["ok"] == false {
+    print("FAIL: output size fixtures could not be read")
+    exit(1)
+}
+normal := normal_result["text"]
+oversized := oversized_result["text"]
+if validate_output_content(normal)["ok"] == false {
+    print("FAIL: normal output content rejected")
+    exit(1)
+}
+if validate_output_content(oversized)["ok"] {
+    print("FAIL: oversized output content accepted")
+    exit(1)
+}
+
+print("output size guard passed")

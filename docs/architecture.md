@@ -1,89 +1,80 @@
 # Redact Architecture
 
-Redact is organized as a conventional Kujo repo: root entrypoint, source modules under `src/`, and tests under `tests/`.
+Redact is a Kujo 1.0 command-line package with a root entrypoint, source modules,
+synthetic fixtures/examples, deterministic tests, and local-only artifacts.
 
 ## Pipeline
 
 ```text
-input -> extract -> detect -> apply policy -> transform -> verify -> export
-                         \-> audit ledger at every step
+validate policy and paths
+  -> load bounded UTF-8 .txt/.md
+  -> deterministic detect
+  -> policy decision
+  -> transform
+  -> deterministic verify
+  -> bounded file or sorted pack output
+  -> local safe-by-default audit at each executed stage
 ```
 
-## Core Contracts
+Stdin and provider calls are outside this pipeline.
 
-- Input adapter and extractor: `src/document.kujo` returns a document envelope with `source_path`, `input_type`, `content`, `content_hash`, `metadata`, and `warnings`.
-- Detector: `src/detect.kujo` returns detection objects with `detector_id`, `category`, `span_start`, `span_end`, `matched_value_hash`, `confidence`, `reason`, and `suggested_action`.
-- Policy engine: `src/policy.kujo` loads YAML policy actions and configured term dictionaries.
-- Transformer: `src/transform.kujo` consumes detector output plus policy decisions. It does not independently scan for new sensitive values.
-- Verifier: `src/verify.kujo` performs deterministic post-transform leakage checks and emits a risk report.
-- Audit ledger: `src/audit.kujo` writes local JSON and JSONL artifacts without raw sensitive values by default.
-- AI provider: `src/ai_provider.kujo` defines the future provider log contract without making model calls.
+## Modules
 
-## Folder Structure
+- `src/cli.kujo`: command, flag, JSON, exit-code, pack, and output contracts.
+- `src/document.kujo`: supported extensions, size limits, UTF-8 loading, and
+  source/output safety.
+- `src/policy.kujo`: strict `redact-policy/v1` parsing and action validation.
+- `src/detect.kujo`: deterministic patterns, Luhn validation, and configured
+  case-insensitive longest-first terms.
+- `src/transform.kujo`: stable replacements and transformation events.
+- `src/verify.kujo`: post-transform deterministic residual-risk checks.
+- `src/audit.kujo`: unique run directories and raw-free default artifacts.
+- `src/version.kujo`: product and schema identities.
+- `src/ai_provider.kujo`: uninvoked future adapter contract only.
 
-```text
-redact.kujo                CLI entrypoint
-src/*.kujo                 adapters, policy, detectors, transforms, verify, audit
-tests/redact_tests.kujo    native Kujo unit snapshot test
-policies/*.yaml            built-in MVP policies
-fixtures/*                 sample input, policy, expected redaction
-tests/run.sh               check plus end-to-end test runner
-docs/architecture.md       module contracts and extension notes
-```
+## Stable envelopes
 
-## Policy Schema
+The document envelope contains `source_path`, `input_type`, `content`,
+`content_hash`, `metadata`, and `warnings`. Detection objects contain
+`detector_id`, `category`, spans, `matched_value_hash`, confidence, reason,
+suggested action, and an in-memory value. The value is required for local
+transformation and is omitted from default audits.
 
-Policies are flat YAML files with a required `name`, category action fields, boolean safety fields, optional configured dictionaries, and optional role mappings.
+Transformations consume detections; they do not independently discover values.
+Repeated exact values use a stable replacement. Configured terms are evaluated
+longest-first to prevent shorter configured terms from corrupting overlapping
+phrases. Pack inputs are sorted by filename and processed non-recursively.
 
-Supported category actions are `remove`, `placeholder`, `role-preserve`, `generalize`, `range`, and `date-generalize`.
+## Versioned contracts
 
-Dictionary keys may use the canonical shape:
+Product version `1.0.0` is independent of:
 
-```yaml
-terms:
-  person_names:
-  - Robert
-```
+- `redact-policy/v1`;
+- `redact-cli-output/v1`;
+- `redact-verifier/v1`;
+- `redact-audit/v1`;
+- `redact-input-manifest/v1` and `redact-output-manifest/v1`; and
+- `redact-policy-snapshot/v1`.
 
-or the legacy local fixture aliases `person_dictionary`, `company_dictionary`, `customer_dictionary`, `product_dictionary`, and `strategy_terms`.
+Schema majors change only for breaking contract changes. Product releases may
+add fields while preserving a schema major.
 
-## Audit Event Schema
+## Failure ordering
 
-Detection audit events contain:
+The CLI loads and validates a policy, validates the audit target, then validates
+the input. Sanitize validates the output before creating its audit run. Policy,
+path, type, size, and read failures stop before transformation or output writes.
+Oversized transformed output stops before the output write; a partial raw-free
+audit may remain and is subject to normal audit protection.
 
-```text
-detector_id, category, span_start, span_end, matched_value_hash,
-confidence, reason, suggested_action
-```
+Verify returns exit `1` when supported leakage checks remain. Sanitize returns
+exit `1` for residual risk only when the selected `--fail-on-risk` threshold is
+met. Pack rejects existing output directories to avoid stale or mixed packs.
 
-Decision events contain:
+## Extension rules
 
-```text
-category, detector_id, matched_value_hash, action, replacement, reason
-```
-
-Transformation events contain:
-
-```text
-category, matched_value_hash, replacement, occurrences, span_start, span_end
-```
-
-Raw originals are excluded unless `--unsafe-store-originals` is explicitly passed.
-
-## Interfaces
-
-Detector modules accept a document envelope plus policy and return `{"ok": true, "detections": [...]}`. A future detector can be registered by returning the same detection object shape.
-
-Transformer modules accept a document envelope, detections, and policy. They return a new document envelope plus decision and transformation event arrays.
-
-Verifier modules accept a document envelope and policy. They return `risk_score`, `reason`, remaining deterministic leakage counts, and warnings.
-
-AI providers must implement stage-specific calls behind the future provider contract in `src/ai_provider.kujo`. Every future call must log provider, model, endpoint type, prompt template id/version, input hash, output hash, policy, stage, invocation reason, and whether original, partially redacted, or fully redacted content was exposed.
-
-## Adding Modules
-
-New adapters, detectors, transformers, verifiers, exporters, and AI providers should be added as separate `src/*` modules and wired through the CLI/pipeline boundary. The pipeline should depend on stable envelopes, not concrete implementation details.
-
-## Failure Behavior
-
-Policy load failure stops before transformation. Unsupported input returns a clear error. Audit setup happens before detector output is emitted. Individual detector expansion should return warnings instead of forcing the whole run to fail unless the policy introduces a hard-stop mode.
+New detectors must remain deterministic, document false-positive/false-negative
+behavior, add synthetic adversarial tests, preserve raw-free audits, and extend
+the verifier where appropriate. New input types, YAML structures, AI adapters,
+network behavior, or schema majors are not compatible 1.x additions without an
+explicit contract and security review.

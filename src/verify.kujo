@@ -1,51 +1,73 @@
-from src.policy import policy_terms
+from src.detect import detect_document
+from src.version import PRODUCT_VERSION, VERIFIER_SCHEMA_VERSION
 
 export func verify_document(doc, policy) {
-    text := doc["content"]
-    remaining_emails := len(regex_find_all(text, "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"))
-    remaining_phones := len(regex_find_all(text, "\\+?[0-9][0-9 .()\\-]{7,}[0-9]"))
-    remaining_domains := len(regex_find_all(text, "https?://[^\\s)>\"]+|\\b[A-Za-z0-9.-]+\\.(?:com|net|org|io|ai|dev|app|co|video)\\b"))
-    remaining_keys := len(regex_find_all(text, "\\b(?:sk-[A-Za-z0-9_-]{16,}|[A-Za-z0-9_]*(?:TOKEN|KEY|SECRET)[A-Za-z0-9_]*=[A-Za-z0-9_./-]{8,})\\b"))
-    unresolved := unresolved_terms(text, policy)
+    detections := detect_document(doc, policy)["detections"]
+    remaining_emails := category_count(detections, "emails")
+    remaining_phones := category_count(detections, "phone_numbers")
+    remaining_domains := category_count(detections, "domains")
+    remaining_keys := category_count(detections, "api_keys")
+    remaining_payment := category_count(detections, "payment_details")
+    remaining_dates := category_count(detections, "exact_dates")
+    remaining_money := category_count(detections, "money_amounts")
+    unresolved := category_count(detections, "person_names") + category_count(detections, "company_names") + category_count(detections, "customer_names") + category_count(detections, "product_names") + category_count(detections, "launch_strategy")
     mut warnings := []
-    if remaining_emails > 0 { warnings = push(warnings, "remaining email pattern") }
-    if remaining_phones > 0 { warnings = push(warnings, "remaining phone pattern") }
-    if remaining_domains > 0 { warnings = push(warnings, "remaining URL/domain pattern") }
-    if remaining_keys > 0 { warnings = push(warnings, "remaining API key pattern") }
-    if len(unresolved) > 0 { warnings = push(warnings, "unresolved configured sensitive terms") }
-    score := "low"
-    reason := "no deterministic leakage checks fired"
-    total := remaining_emails + remaining_phones + remaining_domains + remaining_keys + len(unresolved)
-    if total > 0 {
-        score = "high"
-        reason = "deterministic verifier found remaining sensitive patterns or configured terms"
+    if remaining_emails > 0 {
+        warnings = push(warnings, "remaining email pattern")
     }
-    return {
-        "risk_score": score,
-        "reason": reason,
-        "remaining_emails": remaining_emails,
-        "remaining_phone_numbers": remaining_phones,
-        "remaining_urls_or_domains": remaining_domains,
-        "remaining_api_key_patterns": remaining_keys,
-        "unresolved_configured_terms": len(unresolved),
-        "warnings": warnings
-    }
+if remaining_phones > 0 {
+    warnings = push(warnings, "remaining phone pattern")
+}
+if remaining_domains > 0 {
+    warnings = push(warnings, "remaining URL/domain pattern")
+}
+if remaining_keys > 0 {
+    warnings = push(warnings, "remaining API key pattern")
+}
+if remaining_payment > 0 {
+    warnings = push(warnings, "remaining Luhn-valid payment detail pattern")
+}
+if remaining_dates > 0 {
+    warnings = push(warnings, "remaining exact date pattern")
+}
+if remaining_money > 0 {
+    warnings = push(warnings, "remaining money amount pattern")
+}
+if unresolved > 0 {
+    warnings = push(warnings, "unresolved configured sensitive terms")
+}
+score := "low"
+reason := "no deterministic leakage checks fired"
+total := remaining_emails + remaining_phones + remaining_domains + remaining_keys + remaining_payment + remaining_dates + remaining_money + unresolved
+if total > 0 {
+    score = "high"
+    reason = "deterministic verifier found remaining sensitive patterns or configured terms"
+}
+return {
+    "schemaVersion": VERIFIER_SCHEMA_VERSION,
+    "productVersion": PRODUCT_VERSION,
+    "risk_score": score,
+    "reason": reason,
+    "remaining_emails": remaining_emails,
+    "remaining_phone_numbers": remaining_phones,
+    "remaining_urls_or_domains": remaining_domains,
+    "remaining_api_key_patterns": remaining_keys,
+    "remaining_payment_details": remaining_payment,
+    "remaining_exact_dates": remaining_dates,
+    "remaining_money_amounts": remaining_money,
+    "unresolved_configured_terms": unresolved,
+    "warnings": warnings
+}
 }
 
-func unresolved_terms(text, policy) {
-    mut out := []
-    cats := ["person_names", "company_names", "customer_names", "product_names", "launch_strategy"]
+func category_count(detections, category) {
+    mut total := 0
     mut i := 0
-    while i < len(cats) {
-        terms := policy_terms(policy, cats[i])
-        mut j := 0
-        while j < len(terms) {
-            if terms[j] != "" && contains(to_lower(text), to_lower(terms[j])) == 1 {
-                out = push(out, cats[i])
-            }
-            j = j + 1
+    while i < len(detections) {
+        if detections[i]["category"] == category {
+            total = total + 1
         }
-        i = i + 1
-    }
-    return out
+    i = i + 1
+}
+return total
 }

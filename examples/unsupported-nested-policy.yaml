@@ -1,0 +1,6 @@
+schemaVersion: redact-policy/v1
+name: expected-failure
+terms:
+  person_names:
+    nested:
+      - Synthetic Person

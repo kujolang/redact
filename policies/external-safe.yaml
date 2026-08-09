@@ -1,3 +1,4 @@
+schemaVersion: redact-policy/v1
 name: external-safe
 person_names: placeholder
 company_names: placeholder
@@ -20,4 +21,3 @@ terms:
   customer_names:
   product_names:
   launch_strategy:
-

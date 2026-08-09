@@ -1,0 +1,6 @@
+Remove: +1 (555) 010-1000 and 4111 1111 1111 1111.
+Placeholder: alex@example.com and example.com.
+Role preserve: Morgan Example.
+Generalize: synthetic beta plan.
+Range: $42,000.
+Date generalize: 2026-10-15.

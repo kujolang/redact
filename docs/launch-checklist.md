@@ -1,32 +1,52 @@
-# Launch Checklist
+# Redact 1.0.0 Release Checklist
 
-Current launch scope: `locally verified technical preview`. Redact's deterministic fixture suite, sample expected-output checks, and Workcell proof pass locally, but complete PII removal, compliance guarantees, and target-domain privacy signoff are not complete.
+This checklist prepares an exact commit for human-approved tagging. Passing it
+does not certify complete redaction, compliance, or arbitrary-domain fitness.
 
-## Local Gates
+## Repository and product
 
-- [x] Runtime check executed with `$KUJO_BIN check redact.kujo`.
-- [x] Test suite checked with `bash tests/run.sh`.
-- [x] Fixture scan checked with `$KUJO_BIN run redact.kujo scan fixtures/sample.md --policy fixtures/sample.policy.yaml`.
-- [x] Fixture sanitize checked with `$KUJO_BIN run redact.kujo sanitize fixtures/sample.md --policy fixtures/sample.policy.yaml --out /tmp/redact-next-batch-sample.redacted.md`.
-- [x] Fixture verify checked with `$KUJO_BIN run redact.kujo verify /tmp/redact-next-batch-sample.redacted.md --policy fixtures/sample.policy.yaml`.
-- [x] Formatting checked with `git diff --check`.
-- [x] Workcell proof checked with `workcell run --file docs/workcell-launch-gate.json --repo . --no-pull`.
-- [ ] Domain-specific privacy/security signoff.
+- [x] Product version surfaces declare `1.0.0`.
+- [x] MIT `LICENSE`, `VERSION`, `RUNTIME_VERSION`, `kennel.toml`,
+  `CONTRIBUTING.md`, and `SECURITY.md` exist.
+- [x] README contains stable onboarding, badges, scope, limitations, examples,
+  CLI/JSON/exit-code contracts, and compatibility policy.
+- [x] `-` stdin is explicitly rejected and documented as post-1.0.
+- [x] Synthetic examples cover every stable command and transformation family.
+- [x] Product and schema versions remain independent.
 
-## Workcell Proof Notes
+## Privacy and security
 
-Workcell proof passed after building `kujolang/workcell-base:local` with `DOCKER_BUILDKIT=0`, using the Colima Workcell Docker host, and setting `TMPDIR` to a path under `/Users/robertdevore/2026/Kujolang/kujo-repos/.workcell-host-tmp` so the disposable worktree mount was visible inside the Colima VM.
+- [x] Adversarial tests cover patterns, dictionaries, overlap, repetition,
+  Unicode/confusables within scope, malformed policies, path/symlink/traversal,
+  overwrite prevention, size limits, malformed UTF-8, audit leakage,
+  determinism, pack boundaries, and unsafe-original isolation.
+- [x] Default policy snapshots omit configured terms and role names.
+- [x] Synthetic domain-signoff evidence and residual risks are prepared.
+- [ ] Authorized human privacy/security owner approves the target domain.
+- [ ] Release owner confirms audit storage, access, retention, and destruction
+  procedures for the intended deployment.
 
-Resume command:
+## Exact candidate gates
 
-```bash
-export DOCKER_HOST=unix:///Users/robertdevore/.colima/kujo-workcell/docker.sock
-export DOCKER_CONFIG=/tmp/kujo-next-batch-docker-config
-export TMPDIR=/Users/robertdevore/2026/Kujolang/kujo-repos/.workcell-host-tmp
-workcell run --file docs/workcell-launch-gate.json --repo . --no-pull
-workcell verify --run .workcell/runs/<run-id> --json
-```
+- [ ] `bash scripts/verify-all.sh` passes on the final commit.
+- [ ] Required fixture commands pass with released Kujo 1.0.0.
+- [ ] Markdown link audit reports zero broken local links.
+- [ ] Kennel validation passes.
+- [ ] ShipCheck gate exits `0` with no release-blocking finding.
+- [ ] Workcell proof passes for the exact final commit.
+- [ ] `workcell verify --run <run-dir> --json` verifies that proof receipt.
+- [ ] Hosted Verification workflow passes for the exact final commit.
+- [ ] Working tree is clean and the preparation branch is pushed.
 
-## Forbidden Launch Actions
+## Human release approval
 
-Live credentials, hosted deployment, package publication, final release tags, public releases, signing/notarizing, branch-protection changes, force-pushes, complete-redaction claims, and compliance guarantees remain out of scope.
+- [ ] Human reviewers approve the exact commit SHA and domain signoff.
+- [ ] Release notes in [v1.0.0.md](releases/v1.0.0.md) are approved.
+- [ ] The release owner follows [release-process.md](release-process.md).
+- [ ] Only after approval, an authorized human creates `v1.0.0` on the approved
+  SHA and reviews the tag-triggered artifacts.
+- [ ] Only after artifact/checksum review, an authorized human creates the
+  GitHub release and performs the installation smoke.
+
+No checklist item authorizes an agent to tag, publish, deploy, bypass hosted
+controls, or record human signoff.

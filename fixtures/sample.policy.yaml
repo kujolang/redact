@@ -1,3 +1,4 @@
+schemaVersion: redact-policy/v1
 name: fixture-safe
 person_names: role-preserve
 company_names: placeholder
@@ -16,16 +17,15 @@ write_entity_map: false
 ai_assist: false
 terms:
   person_names:
-  - Robert
-  - Ashley
+    - Robert
+    - Ashley
   company_names:
-  - Team Updraft
+    - Team Updraft
   customer_names:
   product_names:
-  - UpdraftCentral
+    - UpdraftCentral
   launch_strategy:
-  - quiet launch before public announcement
+    - quiet launch before public announcement
 roles:
   Robert: founder
   Ashley: tech lead
-

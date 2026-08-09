@@ -1,3 +1,4 @@
+schemaVersion: redact-policy/v1
 name: basic
 person_names: placeholder
 company_names: placeholder
@@ -14,4 +15,3 @@ launch_strategy: generalize
 preserve_task_structure: true
 write_entity_map: false
 ai_assist: false
-
