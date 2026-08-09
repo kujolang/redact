@@ -55,7 +55,11 @@ git -C "$matcher_dir" init -q
 
 violations=()
 while IFS= read -r -d '' changed_path; do
-  if match="$(git -C "$matcher_dir" check-ignore --no-index -v -- "$changed_path" 2>/dev/null)"; then
+  # `check-ignore -v` exits successfully even when a negated pattern allows the
+  # path. Check the effective ignore result first, then collect the matching
+  # rule only for a genuine violation.
+  if git -C "$matcher_dir" check-ignore --no-index -q -- "$changed_path" 2>/dev/null; then
+    match="$(git -C "$matcher_dir" check-ignore --no-index -v -- "$changed_path" 2>/dev/null)"
     violations+=("$changed_path ($match)")
   fi
 done < <(
