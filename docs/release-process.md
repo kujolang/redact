@@ -61,7 +61,8 @@ SHA outside the repository:
 
 ```bash
 candidate_sha="$(git rev-parse HEAD)"
-artifact_dir="$(mktemp -d /tmp/redact-v1-artifacts.XXXXXX)"
+artifact_root="$(mktemp -d /tmp/redact-v1-artifacts.XXXXXX)"
+artifact_dir="$artifact_root/release"
 scripts/build-release-artifacts.sh "$artifact_dir" "$candidate_sha"
 cd "$artifact_dir"
 shasum -a 256 -c redact-1.0.0-checksums.txt
