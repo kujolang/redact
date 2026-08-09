@@ -1,0 +1,48 @@
+name: release-artifacts
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+
+jobs:
+  release-gates:
+    uses: ./.github/workflows/verification.yml
+
+  build-source-artifacts:
+    needs: release-gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout tagged source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag and version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          test "$GITHUB_REF_NAME" = "v$VERSION"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - name: Build deterministic source and package artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          scripts/build-release-artifacts.sh "$RUNNER_TEMP/redact-release" "$GITHUB_SHA"
+          cd "$RUNNER_TEMP/redact-release"
+          shasum -a 256 -c "redact-$(cat "$GITHUB_WORKSPACE/VERSION")-checksums.txt"
+
+      - name: Upload verified release-candidate artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: redact-${{ github.ref_name }}-artifacts
+          path: ${{ runner.temp }}/redact-release/
+          if-no-files-found: error
+          retention-days: 90

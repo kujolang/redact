@@ -7,6 +7,16 @@ transcript.redacted.md
 transcript.report.json
 *.tmp
 *.log
+__pycache__/
+*.pyc
+redact-pack/
+*.redacted.md
+!fixtures/*.redacted.md
+*.redacted.txt
+redact-*-source.tar.gz
+redact-*-package.zip
+redact-*-provenance.json
+redact-*-checksums.txt
 .loop-engineering/
 # Kujo ecosystem local artifact ignore block.
 # Keep this block repo-local by default. Promote intentionally reviewed examples
