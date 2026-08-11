@@ -21,10 +21,27 @@ if command == "version" {
     print("redact " + PRODUCT_VERSION)
     return 0
 }
+if known_command(command) == false {
+    print("ERROR: unknown command: " + command)
+    return 2
+}
 parsed := parse_args(slice_from(argv, 1))
+if parsed["ok"] == false {
+    print("ERROR: " + parsed["error"])
+    return 2
+}
 pos := parsed["positionals"]
 if len(pos) < 1 {
     print("ERROR: missing input path")
+    return 2
+}
+if len(pos) > 1 {
+    print("ERROR: unexpected positional argument: " + pos[1])
+    return 2
+}
+args_check := validate_command_args(command, parsed)
+if args_check["ok"] == false {
+    print("ERROR: " + args_check["error"])
     return 2
 }
 input_path := pos[0]
@@ -59,7 +76,6 @@ return cmd_verify(input_path, policy, audit_dir)
 if command == "pack" {
     return cmd_pack(input_path, policy, audit_dir, parsed, unsafe)
 }
-print("ERROR: unknown command: " + command)
 return 2
 }
 
@@ -234,20 +250,70 @@ func parse_args(tokens) {
         tok := tokens[i]
         if starts_with(tok, "--") {
             key := substring(tok, 2, len(tok))
-            if key == "write-entity-map"||key == "no-entity-map"||key == "unsafe-store-originals" {
-                flags[key] := true
-            } else if i + 1 < len(tokens)&&starts_with(tokens[i + 1], "--") == false {
-            flags[key] := tokens[i + 1]
-            i = i + 1
-        } else {
-        flags[key] := ""
-    }
+            if known_flag(key) == false {
+                return {"ok": false, "error": "unknown option: --" + key}
+            }
+        if has_key(flags, key) == 1 {
+            return {"ok": false, "error": "duplicate option: --" + key}
+        }
+    if key == "unsafe-store-originals" {
+        flags[key] := true
+    } else if i + 1 < len(tokens)&&starts_with(tokens[i + 1], "--") == false {
+    flags[key] := tokens[i + 1]
+    i = i + 1
+} else {
+return {"ok": false, "error": "option requires a value: --" + key}
+}
 } else {
 positionals = push(positionals, tok)
 }
 i = i + 1
 }
-return {"positionals": positionals, "flags": flags}
+return {"ok": true, "positionals": positionals, "flags": flags}
+}
+
+func known_command(command) {
+    return command == "scan"||command == "sanitize"||command == "verify"||command == "pack"
+}
+
+func known_flag(key) {
+    return key == "policy"||key == "audit-dir"||key == "out"||key == "fail-on-risk"||key == "unsafe-store-originals"
+}
+
+func command_allows_flag(command, key) {
+    if key == "policy"||key == "audit-dir" {
+        return true
+    }
+if key == "unsafe-store-originals" {
+    return command == "scan"||command == "sanitize"||command == "pack"
+}
+if key == "out" {
+    return command == "sanitize"||command == "pack"
+}
+if key == "fail-on-risk" {
+    return command == "sanitize"
+}
+return false
+}
+
+func validate_command_args(command, parsed) {
+    names := keys(parsed["flags"])
+    mut i := 0
+    while i < len(names) {
+        key := names[i]
+        if command_allows_flag(command, key) == false {
+            if key == "unsafe-store-originals" {
+                return {"ok": false, "error": "--unsafe-store-originals is only valid for scan, sanitize, and pack"}
+            }
+        return {"ok": false, "error": "option --" + key + " is not valid for " + command}
+    }
+i = i + 1
+}
+threshold := flag(parsed, "fail-on-risk", "")
+if threshold != ""&&threshold != "medium"&&threshold != "high" {
+    return {"ok": false, "error": "--fail-on-risk must be medium or high"}
+}
+return {"ok": true}
 }
 
 func slice_from(arr, start) {

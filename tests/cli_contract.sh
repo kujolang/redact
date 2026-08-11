@@ -14,9 +14,38 @@ trap cleanup EXIT
 
 cd "$ROOT"
 
+expect_usage_error() {
+  local expected="$1" name="$2"
+  shift 2
+  local status
+  if "$@" > "$TEST_TMP/$name.out" 2>&1; then
+    status=0
+  else
+    status=$?
+  fi
+  if [[ "$status" -ne 2 ]]; then
+    echo "$name returned $status instead of usage exit 2" >&2
+    exit 1
+  fi
+  grep -Fq -- "$expected" "$TEST_TMP/$name.out"
+}
+
 test "$("$KUJO_BIN" run redact.kujo version)" = "redact 1.0.0"
 "$KUJO_BIN" run redact.kujo help > "$TEST_TMP/help.txt"
 grep -Fq "stdin is not supported in 1.0" "$TEST_TMP/help.txt"
+
+expect_usage_error "unknown command: inspect" unknown-command \
+  "$KUJO_BIN" run redact.kujo inspect
+expect_usage_error "unexpected positional argument" extra-positional \
+  "$KUJO_BIN" run redact.kujo scan fixtures/sample.md fixtures/sample.md
+expect_usage_error "unknown option: --mystery" unknown-option \
+  "$KUJO_BIN" run redact.kujo scan fixtures/sample.md --mystery value
+expect_usage_error "option requires a value: --out" missing-option-value \
+  "$KUJO_BIN" run redact.kujo sanitize fixtures/sample.md --out
+expect_usage_error "option --out is not valid for scan" inapplicable-option \
+  "$KUJO_BIN" run redact.kujo scan fixtures/sample.md --out "$TEST_TMP/ignored.md"
+expect_usage_error "--fail-on-risk must be medium or high" invalid-risk-threshold \
+  "$KUJO_BIN" run redact.kujo sanitize fixtures/sample.md --fail-on-risk urgent
 
 "$KUJO_BIN" run redact.kujo scan fixtures/sample.md \
   --policy fixtures/sample.policy.yaml \
