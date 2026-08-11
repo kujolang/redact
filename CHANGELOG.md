@@ -3,6 +3,11 @@
 All notable Redact changes are documented here. Product versions and schema
 versions are independent contracts.
 
+## [Unreleased]
+
+- Fixed ten validated CLI, policy parsing, overlap transformation, content-hash,
+  and money-bucketing defects; added regression coverage for each failure class.
+
 ## [1.0.0] - 2026-08-08
 
 - Declared the stable local `.txt`/`.md`, `redact-policy/v1`, deterministic

@@ -46,6 +46,17 @@ func detection_has_value(detections, value) {
 return false
 }
 
+func all_transformations_applied(transformations) {
+    mut i := 0
+    while i < len(transformations) {
+        if transformations[i]["occurrences"] < 1 {
+            return false
+        }
+    i = i + 1
+}
+return true
+}
+
 policy_res := load_policy("fixtures/sample.policy.yaml")
 assert_true(policy_res["ok"], "policy loads")
 policy := policy_res["policy"]
@@ -104,6 +115,34 @@ overlap_out := transform_document(overlap_doc, overlap_det["detections"], overla
 assert_true(contains(overlap_out, "Lantern") == 0, "longest configured term wins overlapping transformation")
 assert_true(contains(overlap_out, "Project") == 0, "repeated and standalone configured values transform")
 assert_true(to_json(overlap_det) == to_json(detect_document(overlap_doc, overlap_policy)), "detection ordering is deterministic")
+
+cross_policy := policy
+cross_terms := cross_policy["terms"]
+cross_terms["person_names"] := ["Acme"]
+cross_terms["company_names"] := ["Acme Research"]
+cross_policy["terms"] := cross_terms
+cross_doc := memory_document("Acme Research approved $999.99.")
+cross_det := detect_document(cross_doc, cross_policy)
+cross_tx := transform_document(cross_doc, cross_det["detections"], cross_policy)
+cross_out := cross_tx["document"]["content"]
+assert_true(contains(cross_out, "Acme") == 0&&contains(cross_out, "Research") == 0, "longer configured values win across categories")
+assert_true(contains(cross_out, "[COMPANY_A]") == 1, "cross-category overlap uses the complete configured value")
+assert_true(contains(cross_out, "[THREE_FIGURE_AMOUNT]") == 1, "money buckets ignore decimal cents")
+assert_true(all_transformations_applied(cross_tx["transformations"]), "overlapped detections do not emit zero-occurrence transformations")
+assert_true(cross_tx["document"]["content_hash"] == sha256(cross_out), "transformed document hash describes transformed content")
+
+empty_term := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: empty-term\nterms:\n  person_names:\n    - \"\"\n")
+assert_true(empty_term["ok"] == false, "quoted empty configured terms fail closed")
+empty_role := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: empty-role\nroles:\n  Example Person: \"\"\n")
+assert_true(empty_role["ok"] == false, "quoted empty role values fail closed")
+duplicate_term := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: duplicate-term\nterms:\n  person_names:\n    - Example One\n  person_names:\n    - Example Two\n")
+assert_true(duplicate_term["ok"] == false, "duplicate term categories fail closed")
+duplicate_role := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: duplicate-role\nroles:\n  Example Person: lead\n  example person: owner\n")
+assert_true(duplicate_role["ok"] == false, "case-ambiguous duplicate role mappings fail closed")
+flow_term := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: flow-term\nterms:\n  person_names:\n    - [Example Person]\n")
+assert_true(flow_term["ok"] == false, "flow collection term items fail closed")
+block_term := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: block-term\nterms:\n  person_names:\n    - |\n      Example Person\n")
+assert_true(block_term["ok"] == false, "multiline scalar term items fail closed")
 
 unsupported := load_policy("fixtures/unsupported-nested.policy.yaml")
 assert_true(unsupported["ok"] == false, "nested policy fails clearly")

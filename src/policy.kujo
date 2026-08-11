@@ -85,6 +85,8 @@ policy["launch_strategy"] := "generalize"
 mut section := ""
 mut current_list := ""
 mut seen_top := {}
+mut seen_terms := {}
+mut seen_roles := {}
 ls := lines_of(text)
 mut i := 0
 while i < len(ls) {
@@ -124,6 +126,10 @@ if val != "" {
 }
 section = "legacy"
 current_list = normalize_term_key(key)
+if has_key(seen_terms, current_list) == 1 {
+    return policy_error(i, "duplicate configured term category: " + current_list)
+}
+seen_terms[current_list] := true
 } else {
 if val == "" {
     return policy_error(i, "missing scalar value for: " + key)
@@ -141,12 +147,20 @@ term_key := normalize_term_key(pair2["key"])
 if allowed_term_key(term_key) == false||pair2["value"] != "" {
     return policy_error(i, "terms entries must be supported keys followed by indented lists")
 }
+if has_key(seen_terms, term_key) == 1 {
+    return policy_error(i, "duplicate configured term category: " + term_key)
+}
+seen_terms[term_key] := true
 current_list = term_key
 } else if section == "terms"&&indent == 4&&starts_with(line, "- ") {
 if current_list == "" {
     return policy_error(i, "term list item has no category")
 }
-item := unquote(trim(substring(line, 2, len(line))))
+raw_item := trim(substring(line, 2, len(line)))
+if unsupported_scalar_shape(raw_item) {
+    return policy_error(i, "term list items must be scalar values")
+}
+item := unquote(raw_item)
 if item == "" {
     return policy_error(i, "term list items must not be empty")
 }
@@ -159,11 +173,25 @@ pair3 := key_value(line)
 if pair3["key"] == ""||pair3["value"] == "" {
     return policy_error(i, "roles entries must be scalar name-to-role mappings")
 }
+role_key := unquote(pair3["key"])
+role_value := unquote(pair3["value"])
+if role_key == ""||role_value == ""||unsupported_scalar_shape(pair3["key"])||unsupported_scalar_shape(pair3["value"]) {
+    return policy_error(i, "roles entries must be non-empty scalar name-to-role mappings")
+}
+role_identity := to_lower(role_key)
+if has_key(seen_roles, role_identity) == 1 {
+    return policy_error(i, "duplicate role mapping: " + role_key)
+}
+seen_roles[role_identity] := true
 roles := policy["roles"]
-roles[unquote(pair3["key"])] := unquote(pair3["value"])
+roles[role_key] := role_value
 policy["roles"] := roles
 } else if section == "legacy"&&indent == 2&&starts_with(line, "- ") {
-legacy_item := unquote(trim(substring(line, 2, len(line))))
+legacy_raw_item := trim(substring(line, 2, len(line)))
+if unsupported_scalar_shape(legacy_raw_item) {
+    return policy_error(i, "term list items must be scalar values")
+}
+legacy_item := unquote(legacy_raw_item)
 if legacy_item == "" {
     return policy_error(i, "term list items must not be empty")
 }
@@ -229,6 +257,10 @@ if starts_with(line, "!")||starts_with(line, "- !")||contains(line, ": !") == 1 
 }
 return false
 }
+
+func unsupported_scalar_shape(value) {
+    return starts_with(value, "[")||starts_with(value, "{")||value == "|"||value == ">"
+    }
 
 func allowed_top_level_key(key) {
     if key == "schemaVersion"||key == "name"||key == "preserve_task_structure"||key == "write_entity_map"||key == "ai_assist" {
