@@ -1,0 +1,70 @@
+{
+  "runtime_commit": "2b3e07d398016e92008d8399e79c441e012dce38",
+  "baseline_commit": "d58facf61df5e643a26f3e5f4bb705731237226e",
+  "implementation_commit": "b398462716ae6ec13e9d2c0ff2e83998623384c9",
+  "samples_per_workload_per_revision": 3,
+  "results": [
+    {
+      "workload": "emails",
+      "before": {
+        "workload": "emails",
+        "emails": 100,
+        "input_bytes": 2090,
+        "output_bytes": 1092,
+        "runtime": "kujo 1.0.0",
+        "samples_seconds": [
+          8.784292965996428,
+          8.73695930899703,
+          8.653433004001272
+        ],
+        "median_seconds": 8.73695930899703,
+        "output_sha256": "a90222f99e48bd92597e32bbabf41d4978b691166076ab140ef5765982e76be5"
+      },
+      "after": {
+        "workload": "emails",
+        "emails": 100,
+        "input_bytes": 2090,
+        "output_bytes": 1092,
+        "runtime": "kujo 1.0.0",
+        "samples_seconds": [
+          6.814881516998867,
+          4.74419106800633,
+          5.680029549999745
+        ],
+        "median_seconds": 5.680029549999745,
+        "output_sha256": "a90222f99e48bd92597e32bbabf41d4978b691166076ab140ef5765982e76be5"
+      }
+    },
+    {
+      "workload": "dictionary",
+      "before": {
+        "workload": "dictionary",
+        "emails": 0,
+        "input_bytes": 7516,
+        "output_bytes": 7511,
+        "runtime": "kujo 1.0.0",
+        "samples_seconds": [
+          2.7289520719932625,
+          2.3454561969992938,
+          2.581781572996988
+        ],
+        "median_seconds": 2.581781572996988,
+        "output_sha256": "393079e438b28150af12b209060f9642a7e9705358329630c0fd5994dc716d51"
+      },
+      "after": {
+        "workload": "dictionary",
+        "emails": 0,
+        "input_bytes": 7516,
+        "output_bytes": 7511,
+        "runtime": "kujo 1.0.0",
+        "samples_seconds": [
+          1.7324582659930456,
+          1.825855936986045,
+          1.8341137749957852
+        ],
+        "median_seconds": 1.825855936986045,
+        "output_sha256": "393079e438b28150af12b209060f9642a7e9705358329630c0fd5994dc716d51"
+      }
+    }
+  ]
+}
