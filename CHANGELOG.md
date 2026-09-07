@@ -5,6 +5,14 @@ versions are independent contracts.
 
 ## [Unreleased]
 
+- Validate derived audit paths and literal POSIX filenames, reject special
+  output files, and enforce UTF-8 output bounds before replacement allocation.
+- Preserve stable ordering with merge sorting, exact detection membership, and
+  native literal search/replacement; add synthetic hardening regressions and a
+  reproducible end-to-end benchmark.
+- Reject malformed policy names and missing dictionary-category colons, and
+  fail runtime version mismatches before running the verification workload.
+
 - Fixed ten validated CLI, policy parsing, overlap transformation, content-hash,
   and money-bucketing defects; added regression coverage for each failure class.
 

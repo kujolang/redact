@@ -137,11 +137,21 @@ if val == "" {
 if allowed_top_level_key(key) == false {
     return policy_error(i, "unsupported top-level key: " + key)
 }
+if unsupported_scalar_shape(val) {
+    return policy_error(i, "top-level values must use supported scalar syntax")
+}
+if key == "name"&&(starts_with(val, "\"")||starts_with(val, "'")) {
+    policy[key] := unquote(val)
+} else {
 policy[key] := parse_scalar(val)
+}
 section = ""
 current_list = ""
 }
 } else if section == "terms"&&indent == 2&&starts_with(line, "- ") == false {
+if contains(line, ":") == 0 {
+    return policy_error(i, "terms category requires a colon")
+}
 pair2 := key_value(line)
 term_key := normalize_term_key(pair2["key"])
 if allowed_term_key(term_key) == false||pair2["value"] != "" {
@@ -204,7 +214,7 @@ return policy_error(i, "unexpected indentation or nested YAML structure")
 }
 i = i + 1
 }
-if policy["name"] == "" {
+if type(policy["name"]) != "string"||policy["name"] == "" {
     return {"ok": false, "error": "policy name is required"}
 }
 if policy["schemaVersion"] != POLICY_SCHEMA_VERSION {
@@ -259,6 +269,8 @@ return false
 }
 
 func unsupported_scalar_shape(value) {
+    if starts_with(value, "\"")&&(len(value) < 2||ends_with(value, "\"") == false) {return true}
+    if starts_with(value, "'")&&(len(value) < 2||ends_with(value, "'") == false) {return true}
     return starts_with(value, "[")||starts_with(value, "{")||value == "|"||value == ">"
     }
 

@@ -70,6 +70,11 @@ Redact 1.0 is stable for:
 - documented CLI, JSON schema, and exit-code behavior; and
 - offline execution without AI-provider calls.
 
+Output expansion is checked against the 2,097,152-byte UTF-8 limit before
+allocating each replacement result and before verification. A transformation
+whose intermediate result exceeds that limit fails, even if a later rule
+could shrink it.
+
 Symbolic-link paths, traversal segments, source overwrites, oversized inputs or
 outputs, malformed UTF-8, unsupported extensions, and ambiguous policy YAML
 fail closed. Pack output must be a new directory.
@@ -89,6 +94,8 @@ Every policy declares `schemaVersion: redact-policy/v1`, a non-empty `name`,
 category actions, boolean safety fields, and optional `terms` and `roles`
 mappings. The supported structure is shown in
 [`examples/policy.yaml`](examples/policy.yaml).
+
+Policy names must be non-empty strings, and category mappings require a colon.
 
 Policy files are limited to 262,144 bytes and must pass the same regular-file,
 traversal, and symbolic-link checks as inputs.
@@ -223,6 +230,10 @@ export KUJO_BIN=/path/to/kujo-1.0.0/target/release/kujo
 bash tests/run.sh
 bash scripts/verify-all.sh
 ```
+
+A runtime version mismatch fails before the test workload starts. For repeatable
+synthetic performance measurements, run `python3 scripts/benchmark.py`; timings
+are observational, while output determinism and size contracts are CI gates.
 
 The full gate checks all Kujo sources, deterministic and adversarial tests,
 fixture commands, examples, product-version consistency, formatting, lint,

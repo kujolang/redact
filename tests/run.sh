@@ -7,16 +7,19 @@ export KUJO_BIN
 
 cd "$ROOT"
 
+bash scripts/check-version-consistency.sh
+
 "$KUJO_BIN" check redact.kujo
 while IFS= read -r file; do
   "$KUJO_BIN" check "$file"
 done < <(find src tests -type f -name '*.kujo' | sort)
 
 "$KUJO_BIN" run tests/redact_tests.kujo
+"$KUJO_BIN" run tests/hardening_tests.kujo
+python3 tests/hardening_contract.py
 bash tests/cli_contract.sh
 bash tests/policy_adversarial.sh
 bash tests/security_adversarial.sh
 bash tests/examples_smoke.sh
-bash scripts/check-version-consistency.sh
 
 echo "Redact deterministic test suite passed"

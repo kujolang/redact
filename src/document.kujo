@@ -1,4 +1,4 @@
-from src.util import content_hash, ext_of, path_has_symlink_component, path_has_traversal, read_text
+from src.util import content_hash, ext_of, path_has_symlink_component, path_has_traversal, read_text, utf8_size
 
 export MAX_INPUT_BYTES := 1048576
 export MAX_OUTPUT_BYTES := 2097152
@@ -58,6 +58,9 @@ if path_has_symlink_component(output_path) {
 if path_exists(output_path)&&path_is_dir(output_path) {
     return {"ok": false, "error": "output path is a directory: " + output_path}
 }
+if path_exists(output_path)&&path_is_file(output_path) == false {
+    return {"ok": false, "error": "output path is not a regular file: " + output_path}
+}
 if output_path == input_path {
     return {"ok": false, "error": "refusing to overwrite the source file: " + input_path}
 }
@@ -70,7 +73,7 @@ return {"ok": true}
 }
 
 export func validate_output_content(content) {
-    if len(content) > MAX_OUTPUT_BYTES {
+    if utf8_size(content) > MAX_OUTPUT_BYTES {
         return {"ok": false, "error": "transformed output exceeds the 2097152-byte Redact 1.0 limit"}
     }
 return {"ok": true}

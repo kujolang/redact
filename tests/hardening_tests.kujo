@@ -1,0 +1,69 @@
+from src.detect import detect_document
+from src.document import validate_output_content
+from src.policy import parse_policy_yaml
+from src.transform import transform_document
+from src.util import utf8_size, str_find, str_find_from, replace_all_text, longest_first, only_digits
+
+func assert_true(value, message) {
+    if value == false {
+        print("FAIL: " + message)
+        exit(1)
+    }
+}
+
+assert_true(only_digits("$1,234.٥ é🚀 56") == "123456", "digit filter remains ASCII-only")
+assert_true(utf8_size("") == 0, "empty UTF-8 size")
+assert_true(utf8_size("a") == 1&&utf8_size("ab") == 2&&utf8_size("abc") == 3, "base64 padding byte sizes")
+assert_true(utf8_size("é🚀") == 6, "UTF-8 bytes differ from scalar count")
+assert_true(validate_output_content(repeat("🚀", 524288))["ok"], "exact UTF-8 output boundary accepted")
+assert_true(validate_output_content(repeat("🚀", 524289))["ok"] == false, "UTF-8 byte overflow rejected")
+assert_true(str_find("🚀é x é", "é") == 1, "search preserves scalar offsets")
+assert_true(str_find_from("🚀é x é", "é", 2) == 5, "offset search preserves scalar offsets")
+assert_true(str_find("text", "") ==  - 1&&str_find_from("abc", "z", 9) ==  - 1, "search misses preserve contract")
+assert_true(replace_all_text("é x é", "é", "$\\n") == "$\\n x $\\n", "replacement stays literal")
+assert_true(replace_all_text("abc", "", "x") == "abc", "empty replacement needle is inert")
+assert_true(to_json(longest_first(["aa", "bb", "c", "dddd", "ee"], "")) == to_json(["dddd", "aa", "bb", "ee", "c"]), "stable descending length ties")
+
+p := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: bounded\nterms:\n  person_names:\n    - x\n")["policy"]
+p["person_names"] := "role-preserve"
+p["roles"] := {"x": repeat("🚀", 2000)}
+doc := {"source_path": "synthetic.txt", "input_type": "text", "content": repeat("x", 300), "metadata": {}, "warnings": [], "content_hash": "synthetic"}
+det := detect_document(doc, p)
+result := transform_document(doc, det["detections"], p)
+assert_true(result["ok"] == false, "role expansion fails before building oversized output")
+assert_true(contains(result["error"], "2097152-byte") == 1, "expansion preserves size error")
+
+quoted_name := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: \"true\"\n")
+assert_true(quoted_name["ok"]&&quoted_name["policy"]["name"] == "true", "quoted name remains a string")
+
+bad_names := ["true", "false", "[synthetic]", "{synthetic: value}", "|", ">", "\"unfinished"]
+mut i := 0
+while i < len(bad_names) {
+    invalid := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: " + bad_names[i] + "\n")
+    assert_true(invalid["ok"] == false, "invalid name scalar rejected")
+    i = i + 1
+}
+missing_colon := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: missing-colon\nterms:\n  person_names\n    - Synthetic\n")
+assert_true(missing_colon["ok"] == false, "missing term category colon rejected")
+sigma := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: sigma\nterms:\n  person_names:\n    - ΟΣ\n")["policy"]
+sigma_doc := {"content": "ΟΣΑ"}
+sigma_detections := detect_document(sigma_doc, sigma)["detections"]
+assert_true(len(sigma_detections) == 1&&sigma_detections[0]["value"] == "ΟΣ", "context-sensitive Unicode lowercase matching preserved")
+trailing := sigma
+trailing_terms := trailing["terms"]
+trailing_terms["person_names"] := ["i̇"]
+trailing["terms"] := trailing_terms
+trailing_detections := detect_document({"content": "İ"}, trailing)["detections"]
+assert_true(len(trailing_detections) == 1&&trailing_detections[0]["value"] == "İ", "short trailing candidate with lowercase expansion preserved")
+role_policy := p
+role_policy["roles"] := {"x": "straße-ΟΣ İ"}
+role_doc := doc
+role_doc["content"] := "x"
+role_result := transform_document(role_doc, detect_document(role_doc, role_policy)["detections"], role_policy)
+assert_true(role_result["document"]["content"] == "[STRASSE_ΟΣ_İ]", "Unicode role uppercase and separators preserved")
+number_policy := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: numeric\n")["policy"]
+number_doc := doc
+number_doc["content"] := "$" + repeat("9", 50000)
+number_result := transform_document(number_doc, detect_document(number_doc, number_policy)["detections"], number_policy)
+assert_true(number_result["document"]["content"] == "[LARGE_AMOUNT]", "long numeric candidates preserve bucketing without character-copy loops")
+print("Hardening size, ordering, Unicode, and policy contracts passed")

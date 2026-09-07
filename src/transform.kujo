@@ -1,14 +1,16 @@
+from src.document import MAX_OUTPUT_BYTES
 from src.policy import policy_action, policy_role
-from src.util import replace_all_text, count_substr, value_hash, content_hash
+from src.util import replace_all_text, count_substr, value_hash, content_hash, longest_first, utf8_size, only_digits
 
 export func transform_document(doc, detections, policy) {
     mut content := doc["content"]
+    mut content_bytes := utf8_size(content)
     mut counters := {}
     mut replacements := {}
     mut decisions := []
     mut transformations := []
 
-    ordered_detections := longest_values_first(detections)
+    ordered_detections := longest_first(detections, "value")
     mut i := 0
     while i < len(ordered_detections) {
         d := ordered_detections[i]
@@ -32,7 +34,12 @@ replacement = replacement_for(category, original, action, counters, policy)
 replacements[key] := replacement
 counters = bump_counter(counters, category)
 }
+projected_bytes := content_bytes + n * (utf8_size(replacement) - utf8_size(original))
+if projected_bytes > MAX_OUTPUT_BYTES {
+    return {"ok": false, "error": "transformed output exceeds the 2097152-byte Redact 1.0 limit"}
+}
 content = replace_all_text(content, original, replacement)
+content_bytes = projected_bytes
 decisions = push(decisions, {
     "category": category,
     "detector_id": d["detector_id"],
@@ -65,39 +72,6 @@ return {
 "decisions": decisions,
 "transformations": transformations
 }
-}
-
-func longest_values_first(detections) {
-    mut ordered := []
-    mut used := []
-    while len(ordered) < len(detections) {
-        mut best :=  - 1
-        mut best_len :=  - 1
-        mut i := 0
-        while i < len(detections) {
-            if index_used(used, i) == false&&len(detections[i]["value"]) > best_len {
-                best = i
-                best_len = len(detections[i]["value"])
-            }
-        i = i + 1
-    }
-if best >= 0 {
-    ordered = push(ordered, detections[best])
-    used = push(used, best)
-}
-}
-return ordered
-}
-
-func index_used(used, index) {
-    mut i := 0
-    while i < len(used) {
-        if used[i] == index {
-            return true
-        }
-    i = i + 1
-}
-return false
 }
 
 func replacement_for(category, original, action, counters, policy) {
@@ -176,19 +150,7 @@ return to_string(idx)
 }
 
 func to_upper_token(value) {
-    low := value
-    out := ""
-    mut i := 0
-    while i < len(low) {
-        ch := substring(low, i, i + 1)
-        if ch == " "||ch == "-" {
-            out = out + "_"
-        } else {
-        out = out + to_upper(ch)
-    }
-i = i + 1
-}
-return out
+    return to_upper(replace(replace(value, " ", "_"), "-", "_"))
 }
 
 func money_bucket(value) {
@@ -208,17 +170,4 @@ if n == 6 {
     return "[SIX_FIGURE_AMOUNT]"
 }
 return "[LARGE_AMOUNT]"
-}
-
-func only_digits(value) {
-    mut out := ""
-    mut i := 0
-    while i < len(value) {
-        ch := substring(value, i, i + 1)
-        if ch >= "0"&&ch <= "9" {
-            out = out + ch
-        }
-    i = i + 1
-}
-return out
 }

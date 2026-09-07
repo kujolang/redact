@@ -1,5 +1,5 @@
 from src.policy import policy_terms
-from src.util import value_hash, str_find
+from src.util import value_hash, str_find, longest_first, only_digits
 
 export func detect_document(doc, policy) {
     text := doc["content"]
@@ -12,98 +12,77 @@ export func detect_document(doc, policy) {
     detections = append_dates(detections, text)
     detections = append_credit_cards(detections, text)
     detections = append_phones(detections, text)
-    detections = append_terms(detections, text, policy_terms(policy, "person_names"), "dictionary.person", "person_names", "role-preserve")
-    detections = append_terms(detections, text, policy_terms(policy, "company_names"), "dictionary.company", "company_names", "placeholder")
-    detections = append_terms(detections, text, policy_terms(policy, "customer_names"), "dictionary.customer", "customer_names", "placeholder")
-    detections = append_terms(detections, text, policy_terms(policy, "product_names"), "dictionary.product", "product_names", "placeholder")
-    detections = append_terms(detections, text, policy_terms(policy, "launch_strategy"), "dictionary.strategy", "launch_strategy", "generalize")
-    return {"ok": true, "detections": detections}
+    // Materialize Unicode scalars once only when configured dictionaries need
+    // them. Kujo 1.0 substring otherwise copies the complete text per candidate.
+    mut text_chars := []
+    categories := ["person_names", "company_names", "customer_names", "product_names", "launch_strategy"]
+    mut c := 0
+    while c < len(categories) {
+        if len(policy_terms(policy, categories[c])) > 0 {
+            text_chars = regex_find_all(text, "(?s).")
+            break
+        }
+    c = c + 1
+}
+detections = append_terms(detections, text_chars, policy_terms(policy, "person_names"), "dictionary.person", "person_names", "role-preserve")
+detections = append_terms(detections, text_chars, policy_terms(policy, "company_names"), "dictionary.company", "company_names", "placeholder")
+detections = append_terms(detections, text_chars, policy_terms(policy, "customer_names"), "dictionary.customer", "customer_names", "placeholder")
+detections = append_terms(detections, text_chars, policy_terms(policy, "product_names"), "dictionary.product", "product_names", "placeholder")
+detections = append_terms(detections, text_chars, policy_terms(policy, "launch_strategy"), "dictionary.strategy", "launch_strategy", "generalize")
+return {"ok": true, "detections": detections}
 }
 
 func append_phones(detections, text) {
     matches := regex_find_all(text, "(?:\\+[0-9][0-9 .()\\-]{8,}[0-9]|\\b[0-9][0-9 .()\\-]{8,}[0-9]\\b)")
     mut out := detections
-    mut seen := []
+    mut seen := {}
     mut i := 0
     while i < len(matches) {
         value := matches[i]
         digits := only_digits(value)
-        if len(digits) >= 10&&len(digits) <= 15&&unique_seen(seen, value) == 0 {
+        if len(digits) >= 10&&len(digits) <= 15&&has_key(seen, value) == 0 {
             start := str_find(text, value)
             out = push(out, detection("det.phone", "phone_numbers", start, start + len(value), value, 0.86, "deterministic phone pattern match", "remove"))
-            seen = push(seen, value)
+            seen[value] := true
         }
     i = i + 1
 }
 return out
 }
 
-func append_terms(detections, text, terms, detector_id, category, suggested_action) {
+func append_terms(detections, text_chars, terms, detector_id, category, suggested_action) {
     mut out := detections
-    mut seen := []
-    ordered_terms := terms_longest_first(terms)
+    mut seen := {}
+    ordered_terms := longest_first(terms, "")
     mut i := 0
     while i < len(ordered_terms) {
         term := ordered_terms[i]
         mut start_at := 0
-        mut found := find_case_variant_from(text, term, start_at)
+        mut found := find_case_variant_from(text_chars, term, start_at)
         while found["value"] != "" {
             value := found["value"]
-            if unique_seen(seen, value) == 0 {
+            if has_key(seen, value) == 0 {
                 start := found["start"]
                 out = push(out, detection(detector_id, category, start, start + len(value), value, 1.0, "configured sensitive term", suggested_action))
-                seen = push(seen, value)
+                seen[value] := true
             }
         start_at = found["start"] + len(value)
-        found = find_case_variant_from(text, term, start_at)
+        found = find_case_variant_from(text_chars, term, start_at)
     }
 i = i + 1
 }
 return out
 }
 
-func terms_longest_first(terms) {
-    mut ordered := []
-    mut used := []
-    while len(ordered) < len(terms) {
-        mut best :=  - 1
-        mut best_len :=  - 1
-        mut i := 0
-        while i < len(terms) {
-            if index_used(used, i) == false&&len(terms[i]) > best_len {
-                best = i
-                best_len = len(terms[i])
-            }
-        i = i + 1
-    }
-if best >= 0 {
-    ordered = push(ordered, terms[best])
-    used = push(used, best)
-}
-}
-return ordered
-}
-
-func index_used(used, index) {
-    mut i := 0
-    while i < len(used) {
-        if used[i] == index {
-            return true
-        }
-    i = i + 1
-}
-return false
-}
-
-func find_case_variant_from(text, term, start_at) {
+func find_case_variant_from(text_chars, term, start_at) {
     if term == "" {
         return {"value": "", "start": - 1}
     }
 low_term := to_lower(term)
 n := len(term)
 mut i := start_at
-while substring(text, i, i + 1) != "" {
-    candidate := substring(text, i, i + n)
+while i < len(text_chars) {
+    candidate := join(slice(text_chars, i, i + n), "")
     if to_lower(candidate) == low_term {
         return {"value": candidate, "start": i}
     }
@@ -115,14 +94,14 @@ return {"value": "", "start": - 1}
 func append_regex(detections, text, detector_id, category, pattern, suggested_action, confidence) {
     matches := regex_find_all(text, pattern)
     mut out := detections
-    mut seen := []
+    mut seen := {}
     mut i := 0
     while i < len(matches) {
         value := matches[i]
-        if value != ""&&unique_seen(seen, value) == 0 {
+        if value != ""&&has_key(seen, value) == 0 {
             start := str_find(text, value)
             out = push(out, detection(detector_id, category, start, start + len(value), value, confidence, "deterministic pattern match", suggested_action))
-            seen = push(seen, value)
+            seen[value] := true
         }
     i = i + 1
 }
@@ -143,15 +122,15 @@ func append_dates(detections, text) {
 func append_credit_cards(detections, text) {
     matches := regex_find_all(text, "\\b[0-9][0-9 -]{12,22}[0-9]\\b")
     mut out := detections
-    mut seen := []
+    mut seen := {}
     mut i := 0
     while i < len(matches) {
         value := matches[i]
         digits := only_digits(value)
-        if len(digits) >= 13&&len(digits) <= 19&&luhn_valid(digits)&&unique_seen(seen, value) == 0 {
+        if len(digits) >= 13&&len(digits) <= 19&&luhn_valid(digits)&&has_key(seen, value) == 0 {
             start := str_find(text, value)
             out = push(out, detection("det.credit_card.luhn", "payment_details", start, start + len(value), value, 0.99, "credit card candidate passed Luhn validation", "remove"))
-            seen = push(seen, value)
+            seen[value] := true
         }
     i = i + 1
 }
@@ -170,30 +149,6 @@ func detection(detector_id, category, start, end, value, confidence, reason, sug
         "suggested_action": suggested_action,
         "value": value
     }
-}
-
-func unique_seen(arr, value) {
-    mut i := 0
-    while i < len(arr) {
-        if arr[i] == value {
-            return 1
-        }
-    i = i + 1
-}
-return 0
-}
-
-func only_digits(value) {
-    mut out := ""
-    mut i := 0
-    while i < len(value) {
-        ch := substring(value, i, i + 1)
-        if ch >= "0"&&ch <= "9" {
-            out = out + ch
-        }
-    i = i + 1
-}
-return out
 }
 
 func digit_value(ch) {

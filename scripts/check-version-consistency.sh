@@ -28,7 +28,11 @@ test "$(toml_value "$ROOT/kennel.toml" package.status stability)" = "stable"
 test "$(toml_value "$ROOT/kennel.toml" package.status public_api)" = "true"
 test "$(toml_value "$ROOT/kennel.toml" kujo minimum_version)" = "1.0.0"
 test "$(tr -d '[:space:]' < "$ROOT/RUNTIME_VERSION")" = "$RELEASED_KUJO_COMMIT"
-test "$("$KUJO_BIN" --version)" = "kujo 1.0.0"
+actual_runtime="$("$KUJO_BIN" --version)"
+if [[ "$actual_runtime" != "kujo 1.0.0" ]]; then
+  printf 'Expected kujo 1.0.0 from RUNTIME_VERSION; found %s. Set KUJO_BIN to the pinned runtime.\n' "$actual_runtime" >&2
+  exit 1
+fi
 test "$(cd "$ROOT" && "$KUJO_BIN" run redact.kujo version)" = "redact $VERSION"
 grep -Fq "export PRODUCT_VERSION := \"$VERSION\"" "$ROOT/src/version.kujo"
 grep -Eq "^## \[$VERSION\] - [0-9]{4}-[0-9]{2}-[0-9]{2}$" "$ROOT/CHANGELOG.md"

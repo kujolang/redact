@@ -87,7 +87,7 @@ export func path_has_symlink_component(path) {
     if type(path) != "string"||path == "" {
         return false
     }
-mut absolute := replace(path, "\\", "/")
+mut absolute := path
 if starts_with(absolute, "/") == false {
     absolute = os_getcwd() + "/" + absolute
 }
@@ -223,17 +223,7 @@ export func replace_all_text(text, needle, replacement) {
     if needle == "" {
         return text
     }
-parts := split(text, needle)
-if len(parts) == 1 {
-    return text
-}
-mut out := parts[0]
-mut i := 1
-while i < len(parts) {
-    out = out + replacement + parts[i]
-    i = i + 1
-}
-return out
+return replace(text, needle, replacement)
 }
 
 export func count_substr(text, needle) {
@@ -247,19 +237,17 @@ export func str_find_from(text, needle, start_at) {
     if needle == "" {
         return - 1
     }
-nlen := len(needle)
-mut i := start_at
-while substring(text, i, i + 1) != "" {
-    if substring(text, i, i + nlen) == needle {
-        return i
-    }
-i = i + 1
+if start_at >= len(text) {return - 1}
+offset := index_of(substring(text, start_at, len(text)), needle)
+if offset < 0 {
+    return - 1
 }
-return - 1
+return start_at + offset
 }
 
 export func str_find(text, needle) {
-    return str_find_from(text, needle, 0)
+    if needle == "" {return - 1}
+    return index_of(text, needle)
 }
 
 export func json_line(obj) {
@@ -271,4 +259,64 @@ export func unique_push(arr, value) {
         return arr
     }
 return push(arr, value)
+}
+
+// Kujo 1.0 len(string) counts Unicode scalars. Base64 exposes exact UTF-8
+// byte size without a filesystem round trip; the temporary encoding is bounded
+// by the input being measured and is not retained.
+export func utf8_size(text) {
+    encoded := encode_base64(text)
+    size := len(encoded) / 4 * 3
+    if ends_with(encoded, "==") {return size - 2}
+    if ends_with(encoded, "=") {return size - 1}
+    return size
+}
+
+// Stable merge ordering preserves detector/category precedence on equal lengths.
+export func longest_first(items, field) {
+    if len(items) < 2 {return items}
+    mut left := []
+    mut right := []
+    mut i := 0
+    while i < len(items) {
+        if i * 2 < len(items) {
+            left = push(left, items[i])
+        } else {
+        right = push(right, items[i])
+    }
+i = i + 1
+}
+left = longest_first(left, field)
+right = longest_first(right, field)
+mut out := []
+mut l := 0
+mut r := 0
+while l < len(left)&&r < len(right) {
+    lv := left[l]
+    rv := right[r]
+    if field != "" {
+        lv = lv[field]
+        rv = rv[field]
+    }
+if len(lv) >= len(rv) {
+    out = push(out, left[l])
+    l = l + 1
+} else {
+out = push(out, right[r])
+r = r + 1
+}
+}
+while l < len(left) {
+    out = push(out, left[l])
+    l = l + 1
+}
+while r < len(right) {
+    out = push(out, right[r])
+    r = r + 1
+}
+return out
+}
+
+export func only_digits(value) {
+    return regex_replace(value, "[^0-9]", "")
 }

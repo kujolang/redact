@@ -41,7 +41,12 @@ suggested action, and an in-memory value. The value is required for local
 transformation and is omitted from default audits.
 
 Transformations consume detections; they do not independently discover values.
-Repeated exact values use a stable replacement. Configured terms are evaluated
+Repeated exact values use a stable replacement. Detection membership uses exact
+string keys; a shared stable merge ordering preserves original precedence for
+equal-length values. Literal search returns Unicode scalar offsets, matching
+the runtime substring contract. Configured matching materializes Unicode scalars
+once per document, then lowercases each candidate in its original context;
+whole-document lowercasing is not equivalent for Greek final sigma. Configured terms are evaluated
 longest-first to prevent shorter configured terms from corrupting overlapping
 phrases. Pack inputs are sorted by filename and processed non-recursively.
 
@@ -64,7 +69,8 @@ add fields while preserving a schema major.
 The CLI loads and validates a policy, validates the audit target, then validates
 the input. Sanitize validates the output before creating its audit run. Policy,
 path, type, size, and read failures stop before transformation or output writes.
-Oversized transformed output stops before the output write; a partial raw-free
+UTF-8 byte expansion is checked before each replacement allocation. Oversized
+transformed output stops before verification and the output write; a partial raw-free
 audit may remain and is subject to normal audit protection.
 
 Verify returns exit `1` when supported leakage checks remain. Sanitize returns

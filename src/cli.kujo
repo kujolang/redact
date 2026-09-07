@@ -87,6 +87,10 @@ func cmd_scan(input_path, policy, audit_dir, unsafe) {
     }
 doc := doc_res["document"]
 audit := audit_start(audit_dir, "scan", input_path, policy, unsafe)
+if audit["ok"] == false {
+    print("ERROR: " + audit["error"])
+    return 1
+}
 audit_input(audit["run_dir"], doc)
 det := detect_document(doc, policy)
 audit_detections(audit["run_dir"], det["detections"], unsafe)
@@ -119,17 +123,25 @@ if output_check["ok"] == false {
     return 1
 }
 audit := audit_start(audit_dir, "sanitize", input_path, policy, unsafe)
+if audit["ok"] == false {
+    print("ERROR: " + audit["error"])
+    return 1
+}
 audit_input(audit["run_dir"], doc)
 det := detect_document(doc, policy)
 audit_detections(audit["run_dir"], det["detections"], unsafe)
 transformed := transform_document(doc, det["detections"], policy)
+if transformed["ok"] == false {
+    print("ERROR: " + transformed["error"])
+    return 1
+}
 out_doc := transformed["document"]
-report := verify_document(out_doc, policy)
 output_content_check := validate_output_content(out_doc["content"])
 if output_content_check["ok"] == false {
     print("ERROR: " + output_content_check["error"])
     return 1
 }
+report := verify_document(out_doc, policy)
 parent := parent_of(out_path)
 if parent != "" {ensure_dir(parent)}
 write_file_atomic(out_path, out_doc["content"], true)
@@ -167,6 +179,10 @@ func cmd_verify(input_path, policy, audit_dir) {
     }
 doc := doc_res["document"]
 audit := audit_start(audit_dir, "verify", input_path, policy, false)
+if audit["ok"] == false {
+    print("ERROR: " + audit["error"])
+    return 1
+}
 audit_input(audit["run_dir"], doc)
 report := verify_document(doc, policy)
 audit_verify(audit["run_dir"], report)

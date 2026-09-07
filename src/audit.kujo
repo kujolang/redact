@@ -1,9 +1,11 @@
-from src.util import ensure_dir, append_text, json_line, content_hash
+from src.util import ensure_dir, append_text, json_line, content_hash, validate_directory_target
 from src.version import AUDIT_SCHEMA_VERSION, PRODUCT_VERSION
 
 export func audit_start(root, command, input_path, policy, unsafe_store_originals) {
     run_id := format_date(now_unix(), "YYYY-MM-DD-HH-mm-ssZ") + "-" + substring(replace(uuid_v4(), "-", ""), 0, 12)
     run_dir := root + "/runs/" + run_id
+    checked := validate_directory_target(run_dir, "audit run directory")
+    if checked["ok"] == false {return checked}
     ensure_dir(run_dir)
     run := {
         "tool": "redact",
@@ -49,7 +51,7 @@ func safe_policy_snapshot(policy) {
     ]
     mut out := "schemaVersion: redact-policy-snapshot/v1\n"
     out = out + "policySchemaVersion: " + policy["schemaVersion"] + "\n"
-    out = out + "name: " + policy["name"] + "\n"
+    out = out + "name: " + to_json(policy["name"]) + "\n"
     out = out + "sourcePolicySha256: " + content_hash(policy["raw"]) + "\n"
     out = out + "configuredTermCount: " + to_string(configured_term_count(policy)) + "\n"
     out = out + "roleMappingCount: " + to_string(len(keys(policy["roles"]))) + "\n"
@@ -131,15 +133,16 @@ export func audit_verify(run_dir, report) {
 }
 
 export func audit_output(run_dir, out_path, content) {
+    output_hash := content_hash(content)
     manifest := {
         "schemaVersion": "redact-output-manifest/v1",
         "output_path": out_path,
-        "content_hash": content_hash(content),
+        "content_hash": output_hash,
         "length": len(content)
     }
 write_file_atomic(run_dir + "/output-manifest.json", to_json_pretty(manifest), true)
 write_file_atomic(run_dir + "/hashes.json", to_json_pretty({
-    "output": content_hash(content)
+    "output": output_hash
 }), true)
 }
 
