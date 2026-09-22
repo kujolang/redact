@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-KUJO_BIN="${KUJO_BIN:-/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/kujo}"
+KUJO_BIN="${KUJO_BIN:-kujo}"
 TEST_TMP="$(mktemp -d /tmp/redact-security.XXXXXX)"
 
 cleanup() {

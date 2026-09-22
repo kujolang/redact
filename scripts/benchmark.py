@@ -63,7 +63,7 @@ args = parser.parse_args()
 if not 1 <= args.samples <= 20 or not 1 <= args.emails <= 1000 or not 1 <= args.timeout <= 300:
     parser.error("samples must be 1..20, emails 1..1000, timeout 1..300")
 repo = args.repo.resolve()
-kujo = os.environ.get("KUJO_BIN", str(repo.parent / "kujo/target/release/kujo"))
+kujo = os.environ.get("KUJO_BIN", "kujo")
 measurements = []
 hashes = set()
 with tempfile.TemporaryDirectory(prefix="redact-benchmark-") as tmp:

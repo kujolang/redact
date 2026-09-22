@@ -9,11 +9,10 @@ Use Kujo v1.4.0 commit
 `266a8902068a14c3d17f803bef467dc28f1fe162`.
 
 ```bash
-git switch codex/redact-v1-release-prep
 git pull --ff-only
-export KUJO_BIN=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/kujo
+export KUJO_BIN=/absolute/path/to/kujo
 test "$("$KUJO_BIN" --version)" = "kujo 1.4.0"
-test "$(git -C ../kujo rev-parse v1.4.0^{commit})" = "$(cat RUNTIME_VERSION)"
+test "$(cat RUNTIME_VERSION)" = "266a8902068a14c3d17f803bef467dc28f1fe162"
 bash scripts/verify-all.sh
 git status --short
 git rev-parse HEAD
@@ -25,12 +24,12 @@ if `verify-all` output is not retained by the reviewer.
 ## Workcell proof and receipt
 
 Workcell must prove the exact committed candidate, not an uncommitted worktree.
-Use the documented local Docker host when required:
+Use a Docker host with the Workcell-required sandbox features. Set
+`DOCKER_HOST` and `TMPDIR` for that host if the local defaults are unsuitable;
+verify the host before running the exact candidate:
 
 ```bash
-export DOCKER_HOST=unix:///Users/robertdevore/.colima/kujo-workcell/docker.sock
-export DOCKER_CONFIG=/tmp/redact-v1-docker-config
-export TMPDIR=/Users/robertdevore/2026/Kujolang/kujo-repos/.workcell-host-tmp
+docker info
 workcell run --file docs/workcell-launch-gate.json --repo . --no-pull
 workcell verify --run .workcell/runs/<run-id> --json
 ```
@@ -51,7 +50,7 @@ started, closest passing local gate, the repository/organization owner action
 needed to enable the runner, and this safe resume command:
 
 ```bash
-gh workflow run verification.yml --ref codex/redact-v1-release-prep
+gh workflow run verification.yml --ref "$(git branch --show-current)"
 ```
 
 ## Candidate artifacts

@@ -8,7 +8,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parent.parent
-KUJO = os.environ.get("KUJO_BIN", str(ROOT.parent / "kujo/target/release/kujo"))
+KUJO = os.environ.get("KUJO_BIN", "kujo")
 
 
 def run(*args):

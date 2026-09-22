@@ -22,7 +22,7 @@ or AI semantic detection.
 Use the released Kujo runtime identified by `RUNTIME_VERSION`.
 
 ```bash
-export KUJO_BIN=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/kujo
+export KUJO_BIN=/absolute/path/to/kujo
 "$KUJO_BIN" --version
 bash scripts/verify-all.sh
 ```

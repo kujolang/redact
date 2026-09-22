@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-KUJO_BIN="${KUJO_BIN:-/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/kujo}"
+KUJO_BIN="${KUJO_BIN:-kujo}"
 VERSION="$(tr -d '[:space:]' < "$ROOT/VERSION")"
 RELEASED_KUJO_COMMIT="266a8902068a14c3d17f803bef467dc28f1fe162"
 

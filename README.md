@@ -255,6 +255,7 @@ bash tests/run.sh
 bash scripts/verify-all.sh
 ```
 
+If the pinned `kujo` binary is already on `PATH`, `KUJO_BIN` may be omitted.
 A runtime version mismatch fails before the test workload starts. For repeatable
 synthetic performance measurements, run `python3 scripts/benchmark.py`; the
 `--workload max-dictionary --samples 1` case checks a 1 MiB input against a
