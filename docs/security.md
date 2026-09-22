@@ -37,8 +37,18 @@ Pack uses Kujo 1.4's private sibling staging directory and atomic no-replace
 directory publication on macOS, Linux, and Windows. A processing or publish
 failure cannot expose a partly written requested pack directory. A partial
 audit may still remain, and writes after publication are not a joint atomic
-transaction with the pack. Hostile writers on the same host are not an
-established security boundary.
+transaction with the pack. Each member's audit records a pending final-path
+hash before publication and switches to published only after output manifests
+are written. If audit finalization fails, pack JSON reports `published: true`,
+`auditComplete: false`, and a nonzero exit; do not discard the published output
+or assume an incomplete audit is complete. The read-only
+`python3 scripts/reconcile-pack-audits.py --audit-dir PATH` checks member hashes
+and reports `matching_pending`, `recoverable_published`, `not_published`, or
+`needs_review` without changing either output or audit. Matching a pending
+hash cannot prove Redact published the directory: a pre-existing collision
+might have identical bytes. An audit and pack still have no joint
+transaction. Hostile writers on the same host are not an established security
+boundary.
 
 The output limit counts UTF-8 bytes, not Unicode scalars. Each projected
 replacement is checked before allocation, and output is checked before the

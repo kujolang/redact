@@ -8,10 +8,11 @@ publication, bounded no-follow reads and the explicit same-host threat model,
 dictionary cost, narrow policy parsing, clean-install coverage, and the
 [format decision](../formats-next-major.md). Keep the following open:
 
-1. **P1 — Exact candidate evidence.** Verify Workcell receipt and ShipCheck
-   against the final commit, then confirm the hosted Linux/macOS/Windows
-   Verification matrix succeeded at that same SHA. Do not substitute local
-   success for a platform that did not execute. Retain receipts outside Git.
+1. **P1 — Exact candidate evidence.** Obtain a successful Workcell proof and
+   receipt on an AppArmor-capable host, then confirm ShipCheck and the hosted
+   Linux/macOS/Windows Verification matrix succeeded at that same SHA. Do not
+   substitute local success for a platform that did not execute. Retain
+   receipts outside Git.
 2. **P1 — Domain-specific approval.** Have authorized privacy/security owners
    run the [unsigned checklist](../domain-signoff/checklist.md) on each real
    deployment domain, review residual false negatives and audit retention,
@@ -20,11 +21,12 @@ dictionary cost, narrow policy parsing, clean-install coverage, and the
    canonical Codex Security plugin could not start due to its missing Python
    TOML dependency. Retry with a repaired plugin environment; examine any
    validated findings before making a broad security claim.
-4. **P2 — Adversarial output/audit consistency.** Pack members stage before an
-   atomic no-replace directory publish. Audit runs are deliberately outside
-   that transaction, and final-path output audit entries are written after
-   publication. Consider an audit reconciliation record for interruptions or
-   full disks after publication; test recovery without deleting published data.
+4. **P2 — Reviewed audit repair and publication identity.** Pack audits now
+   record pending hashes and provide a read-only reconciliation check for
+   interruptions or changed outputs. A matching pending hash cannot prove
+   whether Redact or a colliding actor published the destination. If automatic
+   repair is desired, design a verifiable publication-identity boundary and
+   human-approved recovery workflow first; never delete published user data.
 5. **P2 — Performance envelope across platforms.** The
    [synthetic Kujo 1.4.0 measurement](performance-1.4.0.md) is one local
    machine and two workloads. Measure worst-case accepted Unicode,

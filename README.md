@@ -164,6 +164,10 @@ publish a partial pack. An audit run may remain incomplete after failure;
 successful pack audits identify the published paths. Concurrent hostile
 filesystem modification is outside the supported boundary. Pack checks each
 eligible input again during processing to reapply normal safety checks.
+The pack summary includes `published`, `auditComplete`, and `auditFailed`.
+If audit finalization fails after publication, the command returns `1` while
+leaving the published pack intact; use the read-only reconciliation check
+described below before relying on the audit.
 
 ## CLI Reference
 
@@ -268,6 +272,10 @@ The hosted Verification workflow also install-smokes a clean committed source
 archive on Linux, macOS, and Windows against checksum-verified Kujo 1.4.0
 release binaries. Locally, `python3 scripts/install-smoke.py` uses `KUJO_BIN`
 if set, or downloads and verifies the platform's official release asset.
+After a pack interruption, the read-only
+`python3 scripts/reconcile-pack-audits.py --audit-dir /path/to/audit` reports
+whether published members match the pending or completed audit hashes. It
+never repairs, removes, or certifies the output; retain both for review.
 
 The [next review backlog](docs/audits/next-review-after-1.4.0.md) separates
 remaining candidate work from verified behavior and release-only approvals;

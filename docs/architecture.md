@@ -54,7 +54,11 @@ processing. Kujo 1.4 creates a private sibling directory and atomically
 publishes it only when every member succeeds; an existing destination is never
 replaced. Audit output manifests use final paths after successful publication.
 Audit runs may remain incomplete on failure and are not part of the atomic
-directory transaction.
+directory transaction. Each member audit records a pending final-path hash
+before publication, and marks it published after its output manifests. A
+read-only reconciliation check can identify hash matches and missing
+manifests; a pending match cannot establish whether a colliding directory
+was actually published by Redact.
 
 ## Versioned contracts
 
@@ -64,8 +68,9 @@ Product version `1.0.0` is independent of:
 - `redact-cli-output/v1`;
 - `redact-verifier/v1`;
 - `redact-audit/v1`;
-- `redact-input-manifest/v1` and `redact-output-manifest/v1`; and
-- `redact-policy-snapshot/v1`.
+- `redact-input-manifest/v1` and `redact-output-manifest/v1`;
+- `redact-policy-snapshot/v1`; and
+- `redact-pack-publication/v1` and `redact-pack-reconciliation/v1`.
 
 Schema majors change only for breaking contract changes. Product releases may
 add fields while preserving a schema major.

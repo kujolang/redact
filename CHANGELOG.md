@@ -5,6 +5,8 @@ versions are independent contracts.
 
 ## [Unreleased]
 
+- Record pack publication intent before atomic publish and provide read-only
+  audit reconciliation for interruptions without touching published members.
 - Use bounded no-follow input reads and Kujo 1.4's constant-time byte length;
   accelerate ASCII dictionary matching without changing Unicode behavior and
   reject excessive configured-term / Unicode-candidate work.
