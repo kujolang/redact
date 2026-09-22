@@ -34,6 +34,15 @@ workcell run --file docs/workcell-launch-gate.json --repo . --no-pull
 workcell verify --run .workcell/runs/<run-id> --json
 ```
 
+Alternatively, manually dispatch `verification.yml` on the candidate branch.
+Its `workcell-proof` job requires seccomp and AppArmor on an Ubuntu Docker
+runner, builds pinned Workcell 1.1.0 and its required Kujo 1.2.1 runtime,
+checks the receipt source commit against the workflow SHA, and uploads the
+verified receipt outside Git for seven days. Inspect the complete job and
+download the proof artifact before it expires; a skipped, failed, or missing
+job is not a Workcell receipt. The separate Redact runtime and install matrix
+continue to require Kujo 1.4.0.
+
 Confirm the receipt source commit equals the candidate SHA. Do not commit
 `.workcell/` evidence. If the job cannot start, record the run/tool state,
 closest passing local evidence, required human infrastructure action, and the

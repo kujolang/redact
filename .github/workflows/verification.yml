@@ -101,3 +101,71 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python scripts/install-smoke.py --benchmarks
+
+  workcell-proof:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      WORKCELL_REF: 074d7262ef6c565e3dabd22ee046228c7329e5c1
+      WORKCELL_KUJO_REF: 692512a9070fdba713f160d795bbddb8077db7b5
+    steps:
+      - name: Checkout exact Redact candidate
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+
+      - name: Require Linux Docker seccomp and AppArmor
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          docker info --format '{{json .SecurityOptions}}' |
+            jq -e 'index("name=apparmor") != null and any(.[]; startswith("name=seccomp"))'
+
+      - name: Build pinned Workcell runtime and source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init "$RUNNER_TEMP/workcell-kujo"
+          git -C "$RUNNER_TEMP/workcell-kujo" remote add origin https://github.com/kujolang/kujo.git
+          git -C "$RUNNER_TEMP/workcell-kujo" fetch --depth 1 origin "$WORKCELL_KUJO_REF"
+          git -C "$RUNNER_TEMP/workcell-kujo" checkout --detach "$WORKCELL_KUJO_REF"
+          test "$(git -C "$RUNNER_TEMP/workcell-kujo" rev-parse HEAD)" = "$WORKCELL_KUJO_REF"
+          cargo build --release --locked --manifest-path "$RUNNER_TEMP/workcell-kujo/Cargo.toml" --bin kujo
+          git init "$RUNNER_TEMP/workcell-src"
+          git -C "$RUNNER_TEMP/workcell-src" remote add origin https://github.com/kujolang/workcell.git
+          git -C "$RUNNER_TEMP/workcell-src" fetch --depth 1 origin "$WORKCELL_REF"
+          git -C "$RUNNER_TEMP/workcell-src" checkout --detach "$WORKCELL_REF"
+          test "$(git -C "$RUNNER_TEMP/workcell-src" rev-parse HEAD)" = "$WORKCELL_REF"
+          test "$(cat "$RUNNER_TEMP/workcell-src/RUNTIME_VERSION")" = "$WORKCELL_KUJO_REF"
+          echo "KUJO=$RUNNER_TEMP/workcell-kujo/target/release/kujo" >> "$GITHUB_ENV"
+          docker build --tag kujolang/workcell-base:local "$RUNNER_TEMP/workcell-src/docker"
+
+      - name: Prove and verify exact candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/workcell-src/bin/workcell" doctor --backend docker --json |
+            jq -e '.ok == true and .blocked == 0'
+          "$RUNNER_TEMP/workcell-src/bin/workcell" run \
+            --file "$GITHUB_WORKSPACE/docs/workcell-launch-gate.json" \
+            --repo "$GITHUB_WORKSPACE" --output "$RUNNER_TEMP/redact-workcell-runs" \
+            --no-pull --summary > "$RUNNER_TEMP/redact-workcell-summary.json"
+          jq -e '.schema_version == "workcell-run-summary/v1" and .ok == true' \
+            "$RUNNER_TEMP/redact-workcell-summary.json"
+          run_dir="$(jq -r '.output_dir' "$RUNNER_TEMP/redact-workcell-summary.json")"
+          test -d "$run_dir"
+          jq -e --arg sha "$GITHUB_SHA" '.source_commit == $sha and .network_mode == "none"' \
+            "$run_dir/receipt.json"
+          "$RUNNER_TEMP/workcell-src/bin/workcell" verify --run "$run_dir" --json |
+            jq -e '.ok == true'
+
+      - name: Retain proof outside Git
+        if: success()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: redact-workcell-proof-${{ github.sha }}
+          path: ${{ runner.temp }}/redact-workcell-runs/
+          retention-days: 7
+          if-no-files-found: error

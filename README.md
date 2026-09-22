@@ -275,7 +275,9 @@ ShipCheck. Release candidates additionally require the
 [Workcell proof and hosted CI receipt](docs/release-process.md).
 The hosted Verification workflow also install-smokes a clean committed source
 archive on Linux, macOS, and Windows against checksum-verified Kujo 1.4.0
-release binaries. Locally, `python3 scripts/install-smoke.py` uses `KUJO_BIN`
+release binaries. Manual dispatches also require a separate AppArmor-backed
+Workcell proof for the exact candidate and retain its receipt as a seven-day
+workflow artifact. Locally, `python3 scripts/install-smoke.py` uses `KUJO_BIN`
 if set, or downloads and verifies the platform's official release asset.
 After a pack interruption, the read-only
 `python3 scripts/reconcile-pack-audits.py --audit-dir /path/to/audit` reports

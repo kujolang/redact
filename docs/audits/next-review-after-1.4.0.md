@@ -11,8 +11,10 @@ dictionary cost, narrow policy parsing, clean-install coverage, and the
 1. **P1 — Exact candidate evidence.** Obtain a successful Workcell proof and
    receipt on an AppArmor-capable host, then confirm ShipCheck and the hosted
    Linux/macOS/Windows Verification matrix succeeded at that same SHA. Do not
-   substitute local success for a platform that did not execute. Retain
-   receipts outside Git.
+   substitute local success for a platform that did not execute. Manual hosted
+   Verification dispatches now attempt the Workcell proof on Ubuntu and retain
+   the receipt outside Git for seven days; inspect the actual job and artifact
+   before crediting this gate.
 2. **P1 — Domain-specific approval.** Have authorized privacy/security owners
    run the [unsigned checklist](../domain-signoff/checklist.md) on each real
    deployment domain, review residual false negatives and audit retention,
