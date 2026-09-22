@@ -29,9 +29,14 @@ fi
 printf 'Synthetic text note\n' > "$TEST_TMP/note.TXT"
 "$KUJO_BIN" run redact.kujo sanitize "$TEST_TMP/note.TXT" --policy basic \
   --audit-dir "$TEST_TMP/uppercase-txt-audit" > "$TEST_TMP/uppercase-txt.json"
-test -f "$TEST_TMP/note.redacted.TXT"
-"$KUJO_BIN" run redact.kujo verify "$TEST_TMP/note.redacted.TXT" --policy basic \
-  --audit-dir "$TEST_TMP/uppercase-txt-verify" >/dev/null
+if test -f "$TEST_TMP/note.redacted.TXT" &&
+   "$KUJO_BIN" run redact.kujo verify "$TEST_TMP/note.redacted.TXT" --policy basic \
+     --audit-dir "$TEST_TMP/uppercase-txt-verify" >/dev/null; then
+  :
+else
+  echo 'FAIL: default output of uppercase .TXT input cannot be verified' >&2
+  failures=$((failures + 1))
+fi
 
 printf 'schemaVersion: redact-policy/v1\nname: synthetic-policy\n' > "$TEST_TMP/active.policy.yaml"
 if "$KUJO_BIN" run redact.kujo sanitize "$TEST_TMP/note.MD" --policy "$TEST_TMP/active.policy.yaml" \
@@ -43,6 +48,7 @@ else
   grep -Fq 'name: synthetic-policy' "$TEST_TMP/active.policy.yaml"
   test ! -e "$TEST_TMP/policy-audit"
 fi
+printf 'schemaVersion: redact-policy/v1\nname: synthetic-policy\n' > "$TEST_TMP/active.policy.yaml"
 if "$KUJO_BIN" run redact.kujo sanitize "$TEST_TMP/note.MD" --policy "$TEST_TMP/active.policy.yaml" \
   --out "$TEST_TMP/./active.policy.yaml" --audit-dir "$TEST_TMP/alias-audit" > "$TEST_TMP/alias-out" 2>&1; then
   echo 'FAIL: sanitize overwrote its policy through a path alias' >&2
