@@ -52,6 +52,15 @@ while i < len(bad_names) {
 missing_colon := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: missing-colon\nterms:\n  person_names\n    - Synthetic\n")
 assert_true(missing_colon["ok"] == false, "missing term category colon rejected")
 sigma := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: sigma\nterms:\n  person_names:\n    - ΟΣ\n")["policy"]
+boundary := {"content": repeat("α", 4095) + "ΟΣ" + repeat("β", 4096)}
+boundary_hits := detect_document(boundary, sigma)["detections"]
+assert_true(len(boundary_hits) == 1&&boundary_hits[0]["span_start"] == 4095, "Unicode term retains its global scalar span")
+expanded_term := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: expansion\nterms:\n  person_names:\n    - i̇\n")["policy"]
+expanded_hits := detect_document({"content": "İ"}, expanded_term)["detections"]
+assert_true(len(expanded_hits) == 1&&expanded_hits[0]["span_end"] == 1, "contextual Unicode lowercase expansion remains matched at document end")
+combined := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: combined\nterms:\n  person_names:\n    - Ω\n  company_names:\n    - Δ\n  customer_names:\n    - Σ\n  product_names:\n    - Ξ\n")["policy"]
+assert_true(detect_document({"content": repeat("α", 524288)}, combined)["ok"] == false, "Unicode candidate budget counts all configured categories")
+assert_true(detect_document({"content": repeat("x", 524288)}, combined)["ok"] == false, "ASCII input with Unicode terms counts all configured categories")
 sigma_doc := {"content": "ΟΣΑ"}
 sigma_detections := detect_document(sigma_doc, sigma)["detections"]
 assert_true(len(sigma_detections) == 1&&sigma_detections[0]["value"] == "ΟΣ", "context-sensitive Unicode lowercase matching preserved")

@@ -20,9 +20,11 @@ export func detect_document(doc, policy) {
     categories := ["person_names", "company_names", "customer_names", "product_names", "launch_strategy"]
     mut term_work := 0
     mut unicode_term_work := 0
+    mut has_terms := false
     mut c := 0
     while c < len(categories) {
         candidate_terms := policy_terms(policy, categories[c])
+        if len(candidate_terms) > 0 {has_terms = true}
         mut t := 0
         while t < len(candidate_terms) {
             term_work = term_work + len(candidate_terms[t])
@@ -31,36 +33,18 @@ export func detect_document(doc, policy) {
             }
             t = t + 1
         }
-        if len(candidate_terms) > 0 {
-            if byte_length(text) == len(text) {
-                low_text = to_lower(text)
-            } else {
-                text_chars = regex_find_all(text, "(?s).")
-            }
-            break
-        }
         c = c + 1
     }
-    if low_text == ""&&len(text_chars) > 0&&len(text_chars) * term_work > 2000000 {
+    if byte_length(text) != len(text)&&len(text) * term_work > 2000000 {
         return {"ok": false, "error": "configured Unicode dictionary work exceeds the 2000000-candidate budget"}
     }
-    if low_text != ""&&len(text) * unicode_term_work > 2000000 {
+    if byte_length(text) == len(text)&&len(text) * unicode_term_work > 2000000 {
         return {"ok": false, "error": "configured Unicode dictionary work exceeds the 2000000-candidate budget"}
     }
-    if low_text != "" {
-        c = 0
-        while c < len(categories) {
-            candidate_terms := policy_terms(policy, categories[c])
-            mut t := 0
-            while t < len(candidate_terms) {
-                if byte_length(candidate_terms[t]) != len(candidate_terms[t]) {
-                    text_chars = regex_find_all(text, "(?s).")
-                    break
-                }
-                t = t + 1
-            }
-            if len(text_chars) > 0 {break}
-            c = c + 1
+    if has_terms {
+        if byte_length(text) == len(text) {low_text = to_lower(text)}
+        if low_text == ""||unicode_term_work > 0 {
+            text_chars = regex_find_all(text, "(?s).")
         }
     }
     detections = append_terms(detections, text, text_chars, low_text, policy_terms(policy, "person_names"), "dictionary.person", "person_names", "role-preserve")

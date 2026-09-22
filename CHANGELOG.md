@@ -5,6 +5,9 @@ versions are independent contracts.
 
 ## [Unreleased]
 
+- Apply the Unicode dictionary work budget across every configured category,
+  not only the first nonempty one; test accepted scalar offsets and lowercase
+  expansion at document boundaries.
 - Avoid quadratic whole-input copies for frequent ASCII dictionary terms;
   add synthetic Unicode/repetition/aggregate-pack measurements on the hosted
   install-smoke matrix while preserving output hashes.
