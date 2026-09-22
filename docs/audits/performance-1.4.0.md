@@ -32,6 +32,7 @@ the entire input for each occurrence. Unicode matching deliberately retains
 context-sensitive candidate evaluation. Its observed 269.6 MB peak is a
 meaningful cost for a 1 MiB document, not a memory ceiling or a guarantee for
 other combinations. The hosted install-smoke matrix logs these four workloads
-on supported platforms without treating timings as universal thresholds;
-Windows reports time but no peak RSS when the Python `resource` module is
-unavailable.
+on supported platforms without treating timings as universal thresholds.
+On Windows the runner samples the child process's OS-maintained
+[peak working set](https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters)
+instead of POSIX `ru_maxrss`; `peak_memory_basis` distinguishes these metrics.

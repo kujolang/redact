@@ -32,8 +32,9 @@ dictionary cost, narrow policy parsing, clean-install coverage, and the
 5. **P2 — Performance envelope across platforms.** The
    [synthetic Kujo 1.4.0 measurement](performance-1.4.0.md) covers five
    workloads on one local machine; the hosted install matrix also logs the
-   four boundary workloads across supported systems. Windows does not yet
-   report peak RSS. Measure other accepted Unicode/term combinations,
+   four boundary workloads across supported systems; Windows uses peak
+   working-set measurement, which is not identical to POSIX `ru_maxrss`.
+   Measure other accepted Unicode/term combinations,
    replacement expansion, aggregate pack work beyond sixteen members, and
    actual deployments before setting any service-level budget.
 6. **P2 — Future structured formats.** If demand warrants CSV, JSON, recursive

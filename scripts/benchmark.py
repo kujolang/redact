@@ -12,7 +12,44 @@ except ImportError:
 import statistics
 import subprocess
 import tempfile
+import threading
 import time
+
+
+def windows_peak_sampler(process, stop, peak):
+    """Read the child's OS-maintained peak working set while its handle lives."""
+    import ctypes
+    from ctypes import wintypes
+
+    class MemoryCounters(ctypes.Structure):
+        _fields_ = [("cb", wintypes.DWORD), ("PageFaultCount", wintypes.DWORD),
+                   ("PeakWorkingSetSize", ctypes.c_size_t), ("WorkingSetSize", ctypes.c_size_t),
+                   ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+                   ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                   ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+                   ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                   ("PagefileUsage", ctypes.c_size_t),
+                   ("PeakPagefileUsage", ctypes.c_size_t)]
+
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    psapi = ctypes.WinDLL("psapi", use_last_error=True)
+    kernel.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    kernel.OpenProcess.restype = ctypes.c_void_p
+    kernel.CloseHandle.argtypes = [ctypes.c_void_p]
+    psapi.GetProcessMemoryInfo.argtypes = [ctypes.c_void_p, ctypes.c_void_p, wintypes.DWORD]
+    handle = kernel.OpenProcess(0x1000, False, process.pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+    if not handle:
+        return
+    try:
+        while True:
+            counters = MemoryCounters()
+            counters.cb = ctypes.sizeof(counters)
+            if psapi.GetProcessMemoryInfo(handle, ctypes.byref(counters), counters.cb):
+                peak[0] = max(peak[0], counters.PeakWorkingSetSize)
+            if stop.wait(0.02):
+                break
+    finally:
+        kernel.CloseHandle(handle)
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parent.parent)
@@ -73,17 +110,36 @@ with tempfile.TemporaryDirectory(prefix="redact-benchmark-") as tmp:
         output = root / (f"pack-{i}" if args.workload == "pack-batch" else f"output-{i}.md")
         start = time.perf_counter()
         command = "pack" if args.workload == "pack-batch" else "sanitize"
-        result = subprocess.run([kujo, "run", "redact.kujo", command, str(source),
-                                 "--policy", policy, "--out", str(output),
-                                 "--audit-dir", str(root / f"audit-{i}")],
-                                cwd=repo, capture_output=True, text=True, timeout=args.timeout)
+        process = subprocess.Popen([kujo, "run", "redact.kujo", command, str(source),
+                                    "--policy", policy, "--out", str(output),
+                                    "--audit-dir", str(root / f"audit-{i}")],
+                                   cwd=repo, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        stop = threading.Event()
+        windows_peak = [0]
+        sampler = None
+        if os.name == "nt":
+            sampler = threading.Thread(target=windows_peak_sampler, args=(process, stop, windows_peak),
+                                       daemon=True)
+            sampler.start()
+        try:
+            stdout, stderr = process.communicate(timeout=args.timeout)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.communicate()
+            raise
+        finally:
+            stop.set()
+            if sampler:
+                sampler.join(timeout=2)
         elapsed = time.perf_counter() - start
-        peak_rss = resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss if resource else None
+        peak_rss = resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss if resource else (windows_peak[0] or None)
+        if os.name == "nt" and peak_rss is None:
+            raise RuntimeError("Windows peak working set could not be measured")
         if peak_rss is not None and os.name == "posix" and os.uname().sysname == "Linux":
             peak_rss *= 1024
-        if result.returncode:
-            raise RuntimeError(result.stdout + result.stderr)
-        receipt = json.loads(result.stdout)
+        if process.returncode:
+            raise RuntimeError(stdout + stderr)
+        receipt = json.loads(stdout)
         if args.workload == "pack-batch":
             assert receipt["processed"] == 16 and receipt["auditComplete"], receipt
             members = sorted(output.iterdir())
@@ -102,5 +158,6 @@ with tempfile.TemporaryDirectory(prefix="redact-benchmark-") as tmp:
                       "runtime": subprocess.check_output([kujo, "--version"], text=True).strip(),
                       "policy_bytes": Path(policy).stat().st_size if policy != "basic" else None,
                       "peak_child_rss_bytes": peak_rss,
+                      "peak_memory_basis": "windows_peak_working_set" if os.name == "nt" else "child_maxrss",
                       "samples_seconds": measurements, "median_seconds": statistics.median(measurements),
                       "output_sha256": next(iter(hashes))}, indent=2))
