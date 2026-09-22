@@ -19,7 +19,9 @@ dictionary cost, narrow policy parsing, clean-install coverage, and the
    and approve the exact SHA. An agent cannot issue that approval.
 3. **P1 — Close the independent security scan gap.** The previously attempted
    canonical Codex Security plugin could not start due to its missing Python
-   TOML dependency. Retry with a repaired plugin environment; examine any
+   TOML dependency; a later attempt failed during module import on an
+   unsupported `type | None` operation before creating a scan. Repair the
+   plugin's Python environment and retry the exact-commit scan; examine any
    validated findings before making a broad security claim.
 4. **P2 — Reviewed audit repair and publication identity.** Pack audits now
    record pending hashes and provide a read-only reconciliation check for
@@ -28,10 +30,12 @@ dictionary cost, narrow policy parsing, clean-install coverage, and the
    repair is desired, design a verifiable publication-identity boundary and
    human-approved recovery workflow first; never delete published user data.
 5. **P2 — Performance envelope across platforms.** The
-   [synthetic Kujo 1.4.0 measurement](performance-1.4.0.md) is one local
-   machine and two workloads. Measure worst-case accepted Unicode,
-   replacement-heavy text, large term sets, and aggregate pack work on each
-   supported platform before setting any service-level budget.
+   [synthetic Kujo 1.4.0 measurement](performance-1.4.0.md) covers five
+   workloads on one local machine; the hosted install matrix also logs the
+   four boundary workloads across supported systems. Windows does not yet
+   report peak RSS. Measure other accepted Unicode/term combinations,
+   replacement expansion, aggregate pack work beyond sixteen members, and
+   actual deployments before setting any service-level budget.
 6. **P2 — Future structured formats.** If demand warrants CSV, JSON, recursive
    packs or bounded stdin, implement only after the explicit syntax, audit,
    security and version criteria in the [format proposal](../formats-next-major.md)
