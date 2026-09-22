@@ -5,6 +5,9 @@ versions are independent contracts.
 
 ## [Unreleased]
 
+- Avoid quadratic whole-input copies for frequent ASCII dictionary terms;
+  add synthetic Unicode/repetition/aggregate-pack measurements on the hosted
+  install-smoke matrix while preserving output hashes.
 - Record pack publication intent before atomic publish and provide read-only
   audit reconciliation for interruptions without touching published members.
 - Use bounded no-follow input reads and Kujo 1.4's constant-time byte length;

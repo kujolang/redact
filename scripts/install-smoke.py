@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 """Install-smoke the committed source archive with a verified Kujo 1.4 binary."""
+import argparse
 import hashlib
 import os
 from pathlib import Path
 import platform
 import subprocess
+import sys
 import tarfile
 import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parent.parent
 RELEASE = "v1.4.0"
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--benchmarks", action="store_true", help="log bounded synthetic cross-platform timings")
+args = parser.parse_args()
 
 
 def run(*args, cwd=ROOT, timeout=120):
@@ -89,3 +94,13 @@ with tempfile.TemporaryDirectory(prefix="redact-install-smoke-") as tmp:
         "examples/policy.yaml", "--out", pack, "--audit-dir", audit, cwd=checkout)
     assert len(list(pack.iterdir())) == 2
     print(f"Clean source-archive install smoke passed on {platform.system()} with Kujo 1.4.0")
+    if args.benchmarks:
+        for workload in ("max-dictionary", "repeated-dictionary", "unicode-dictionary", "pack-batch"):
+            measured = subprocess.run([sys.executable, str(checkout / "scripts/benchmark.py"),
+                                       "--repo", str(checkout), "--workload", workload,
+                                       "--samples", "1", "--timeout", "120"],
+                                      env={**os.environ, "KUJO_BIN": str(kujo)},
+                                      cwd=checkout, capture_output=True, text=True, timeout=180)
+            if measured.returncode:
+                raise RuntimeError(f"{workload} benchmark failed: {measured.stdout}{measured.stderr}")
+            print(measured.stdout, flush=True)
