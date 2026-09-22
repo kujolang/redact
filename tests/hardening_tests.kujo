@@ -1,4 +1,4 @@
-from src.detect import detect_document
+from src.detect import detect_document, regex_literal_ascii
 from src.document import validate_output_content
 from src.policy import parse_policy_yaml
 from src.transform import transform_document
@@ -23,6 +23,12 @@ assert_true(str_find("text", "") ==  - 1&&str_find_from("abc", "z", 9) ==  - 1, 
 assert_true(replace_all_text("é x é", "é", "$\\n") == "$\\n x $\\n", "replacement stays literal")
 assert_true(replace_all_text("abc", "", "x") == "abc", "empty replacement needle is inert")
 assert_true(to_json(longest_first(["aa", "bb", "c", "dddd", "ee"], "")) == to_json(["dddd", "aa", "bb", "ee", "c"]), "stable descending length ties")
+meta := ".+*?[](){}^$|\\"
+assert_true(to_json(regex_find_all("before " + meta + " after", "(?i)" + regex_literal_ascii(meta))) == to_json([meta]), "configured ASCII regex metacharacters remain literal")
+meta_policy := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: meta\nterms:\n  person_names:\n    - A+B\n")["policy"]
+meta_doc := {"content": "A+B a+b AXXB"}
+meta_detections := detect_document(meta_doc, meta_policy)["detections"]
+assert_true(len(meta_detections) == 2&&meta_detections[0]["span_start"] == 0&&meta_detections[1]["span_start"] == 4, "ASCII literal matching preserves distinct variants and scalar spans")
 
 p := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: bounded\nterms:\n  person_names:\n    - x\n")["policy"]
 p["person_names"] := "role-preserve"

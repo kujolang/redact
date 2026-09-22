@@ -96,6 +96,33 @@ func append_terms(detections, text, text_chars, low_text, terms, detector_id, ca
     mut i := 0
     while i < len(ordered_terms) {
         term := ordered_terms[i]
+        if low_text != ""&&byte_length(term) == len(term) {
+            low_term := to_lower(term)
+            if index_of(low_text, low_term) < 0 {
+                i = i + 1
+                continue
+            }
+            // Native split supplies scalar offsets, and native regex supplies
+            // original case variants; avoid repeatedly copying the 1 MiB
+            // document to find each occurrence of a frequent ASCII term.
+            parts := split(low_text, low_term)
+            variants := regex_find_all(text, "(?i)" + regex_literal_ascii(term))
+            if len(variants) == len(parts) - 1 {
+                mut position := len(parts[0])
+                mut v := 0
+                while v < len(variants) {
+                    value := variants[v]
+                    if has_key(seen, value) == 0 {
+                        out = push(out, detection(detector_id, category, position, position + len(value), value, 1.0, "configured sensitive term", suggested_action))
+                        seen[value] := true
+                    }
+                    position = position + len(value) + len(parts[v + 1])
+                    v = v + 1
+                }
+                i = i + 1
+                continue
+            }
+        }
         mut start_at := 0
         mut found := find_term_from(text, text_chars, low_text, term, start_at)
         while found["value"] != "" {
@@ -111,6 +138,10 @@ func append_terms(detections, text, text_chars, low_text, terms, detector_id, ca
         i = i + 1
     }
     return out
+}
+
+export func regex_literal_ascii(value) {
+    return regex_replace(value, "([.\\\\+*?\\[\\](){}^$|])", "\\$1")
 }
 
 func find_term_from(text, text_chars, low_text, term, start_at) {
