@@ -156,7 +156,10 @@ not assurances that an unmatched value is safe.
 
 Repeated exact values reuse the same replacement. Folder entries are sorted
 before pack processing so output content and ordering are deterministic.
-Pack validates supported members and rejects empty packs. It builds output in
+Pack validates supported members, rejects empty packs, and caps a non-recursive
+pack at 256 supported files and 16 MiB of aggregate UTF-8 input (in addition
+to the 1 MiB per-file limit). Exceeding either cap fails before staging or
+audit creation. It builds output in
 a private directory beside the destination, then uses Kujo 1.4's atomic
 no-replace directory publication: the requested destination is either absent
 or contains the completed pack. Processing or publication failures do not

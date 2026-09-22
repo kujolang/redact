@@ -6,15 +6,18 @@ The previous [review](next-review-2026-09-22.md) records the original six
 proposals. The implementation and synthetic tests in this pass address pack
 publication, bounded no-follow reads and the explicit same-host threat model,
 dictionary cost, narrow policy parsing, clean-install coverage, and the
-[format decision](../formats-next-major.md). Keep the following open:
+[format decision](../formats-next-major.md). This branch also caps
+non-recursive packs at 256 files/16 MiB aggregate input, reduces Unicode
+matcher peak memory with bounded scalar windows, and corrects the performance
+matrix description. Keep the following open:
 
-1. **P1 — Exact candidate evidence.** Obtain a successful Workcell proof and
-   receipt on an AppArmor-capable host, then confirm ShipCheck and the hosted
-   Linux/macOS/Windows Verification matrix succeeded at that same SHA. Do not
-   substitute local success for a platform that did not execute. Manual hosted
-   Verification dispatches now attempt the Workcell proof on Ubuntu and retain
-   the receipt outside Git for seven days; inspect the actual job and artifact
-   before crediting this gate.
+1. **P1 — Exact candidate evidence.** The previous candidate `ab4d0a6` passed
+   [hosted Verification](https://github.com/kujolang/redact/actions/runs/35746163080),
+   including the Linux/macOS/Windows matrix and AppArmor-backed Workcell proof
+   with receipt `wc-c2ce705405364e1fa2a34f1d247e6991` (seven-day artifact
+   retention). This new branch changes code: obtain a new successful exact-SHA
+   hosted Verification, Workcell receipt, and ShipCheck exit code `0` before
+   crediting those gates to the new candidate. Local success is not a substitute.
 2. **P1 — Domain-specific approval.** Have authorized privacy/security owners
    run the [unsigned checklist](../domain-signoff/checklist.md) on each real
    deployment domain, review residual false negatives and audit retention,

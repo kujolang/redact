@@ -43,9 +43,15 @@ Neither a low verifier score nor these timings establish complete detection,
 enterprise readiness, or fitness for an unreviewed data domain.
 The repeated-term result uses native, literal ASCII matching to avoid copying
 the entire input for each occurrence. Unicode matching deliberately retains
-context-sensitive candidate evaluation. Its observed 269.6 MB peak is a
-meaningful cost for a 1 MiB document, not a memory ceiling or a guarantee for
-other combinations. The hosted install-smoke matrix logs these four workloads
+context-sensitive candidate evaluation. The earlier 269.6 MB peak for a
+1 MiB document was meaningful, but the new bounded 65,536-scalar matcher
+windows reduced a single local synthetic probe to 67,444,736 bytes (about
+64.3 MiB) and 12.816 s. For the two-category 512 KiB probe the new single
+sample measured 61,452,288 bytes (about 58.6 MiB) and 12.855 s, compared to
+the earlier 138.7 MB and 13.506 s. Both new outputs retain the same input
+bytes and Unicode span tests now cover the window boundary. These are
+single-sample observations, not memory ceilings, speedup guarantees, or
+cross-platform comparisons. The hosted install-smoke matrix logs seven boundary workloads
 on supported platforms without treating timings as universal thresholds.
 On Windows the runner samples the child process's OS-maintained
 [peak working set](https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters)
