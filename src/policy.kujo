@@ -143,6 +143,9 @@ export func parse_policy_yaml(text) {
                 if unsupported_scalar_shape(val) {
                     return policy_error(i, "top-level values must use supported scalar syntax")
                 }
+                if is_boolean_field(key)&&(starts_with(val, "\"")||starts_with(val, "'")) {
+                    return policy_error(i, "policy safety booleans must not be quoted")
+                }
                 if key == "name"&&(starts_with(val, "\"")||starts_with(val, "'")) {
                     policy[key] := unquote(val)
                 } else {
@@ -176,6 +179,9 @@ export func parse_policy_yaml(text) {
             if unsupported_scalar_shape(raw_item) {
                 return policy_error(i, "term list items must be scalar values")
             }
+            if unquoted_mapping_item(raw_item) {
+                return policy_error(i, "term list items must not contain YAML mappings")
+            }
             item := unquote(raw_item)
             if item == "" {
                 return policy_error(i, "term list items must not be empty")
@@ -206,6 +212,9 @@ export func parse_policy_yaml(text) {
             legacy_raw_item := trim(substring(line, 2, len(line)))
             if unsupported_scalar_shape(legacy_raw_item) {
                 return policy_error(i, "term list items must be scalar values")
+            }
+            if unquoted_mapping_item(legacy_raw_item) {
+                return policy_error(i, "term list items must not contain YAML mappings")
             }
             legacy_item := unquote(legacy_raw_item)
             if legacy_item == "" {
@@ -286,6 +295,15 @@ func unsupported_scalar_shape(value) {
     if starts_with(value, "\"")&&(len(value) < 2||ends_with(value, "\"") == false) {return true}
     if starts_with(value, "'")&&(len(value) < 2||ends_with(value, "'") == false) {return true}
     return starts_with(value, "[")||starts_with(value, "{")||value == "|"||value == ">"||contains(value, " #") == 1
+}
+
+func is_boolean_field(key) {
+    return key == "preserve_task_structure"||key == "write_entity_map"||key == "ai_assist"
+}
+
+func unquoted_mapping_item(value) {
+    if starts_with(value, "\"")||starts_with(value, "'") {return false}
+    return contains(value, ": ") == 1||ends_with(value, ":")
 }
 
 func unsupported_inline_comment(line) {

@@ -130,6 +130,10 @@ func cmd_sanitize(input_path, policy, audit_dir, parsed, unsafe, emit_output) {
         print("ERROR: " + output_check["error"])
         return 1
     }
+    if path_exists(out_path)&&path_absolute(out_path) == path_absolute(normalize_cli_path(policy["path"])) {
+        print("ERROR: output path must not overwrite the policy file: " + out_path)
+        return 1
+    }
     audit := audit_start(audit_dir, "sanitize", input_path, policy, unsafe)
     if audit["ok"] == false {
         print("ERROR: " + audit["error"])
@@ -512,11 +516,11 @@ func flag(parsed, name, fallback) {
 }
 
 func default_output_path(input_path) {
-    if ends_with(input_path, ".md") {
-        return substring(input_path, 0, len(input_path) - 3) + ".redacted.md"
+    if ends_with(to_lower(input_path), ".md") {
+        return substring(input_path, 0, len(input_path) - 3) + ".redacted" + substring(input_path, len(input_path) - 3, len(input_path))
     }
-    if ends_with(input_path, ".txt") {
-        return substring(input_path, 0, len(input_path) - 4) + ".redacted.txt"
+    if ends_with(to_lower(input_path), ".txt") {
+        return substring(input_path, 0, len(input_path) - 4) + ".redacted" + substring(input_path, len(input_path) - 4, len(input_path))
     }
     return input_path + ".redacted"
 }

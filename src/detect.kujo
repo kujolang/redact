@@ -1,5 +1,5 @@
 from src.policy import policy_terms
-from src.util import value_hash, str_find, str_find_from, longest_first, only_digits
+from src.util import value_hash, str_find_from, longest_first, only_digits
 
 export func detect_document(doc, policy) {
     text := doc["content"]
@@ -52,18 +52,22 @@ export func detect_document(doc, policy) {
 }
 
 func append_phones(detections, text) {
-    matches := regex_find_all(text, "(?:\\+[0-9][0-9 .()\\-]{8,}[0-9]|\\b[0-9][0-9 .()\\-]{8,}[0-9]\\b)")
+    pattern := "(?:\\+[0-9][0-9 .()\\-]{8,}[0-9]|\\b[0-9][0-9 .()\\-]{8,}[0-9]\\b)"
+    matches := regex_find_all(text, pattern)
+    if len(matches) == 0 {return detections}
+    parts := regex_split(text, pattern)
     mut out := detections
     mut seen := {}
+    mut start := len(parts[0])
     mut i := 0
     while i < len(matches) {
         value := matches[i]
         digits := only_digits(value)
         if len(digits) >= 10&&len(digits) <= 15&&has_key(seen, value) == 0 {
-            start := str_find(text, value)
             out = push(out, detection("det.phone", "phone_numbers", start, start + len(value), value, 0.86, "deterministic phone pattern match", "remove"))
             seen[value] := true
         }
+        start = start + len(value) + len(parts[i + 1])
         i = i + 1
     }
     return out
@@ -174,16 +178,19 @@ func find_case_variant_from(text, term, start_at) {
 
 func append_regex(detections, text, detector_id, category, pattern, suggested_action, confidence) {
     matches := regex_find_all(text, pattern)
+    if len(matches) == 0 {return detections}
+    parts := regex_split(text, pattern)
     mut out := detections
     mut seen := {}
+    mut start := len(parts[0])
     mut i := 0
     while i < len(matches) {
         value := matches[i]
         if value != ""&&has_key(seen, value) == 0 {
-            start := str_find(text, value)
             out = push(out, detection(detector_id, category, start, start + len(value), value, confidence, "deterministic pattern match", suggested_action))
             seen[value] := true
         }
+        start = start + len(value) + len(parts[i + 1])
         i = i + 1
     }
     return out
@@ -201,18 +208,22 @@ func append_dates(detections, text) {
 }
 
 func append_credit_cards(detections, text) {
-    matches := regex_find_all(text, "\\b[0-9][0-9 -]{12,22}[0-9]\\b")
+    pattern := "\\b[0-9][0-9 -]{12,22}[0-9]\\b"
+    matches := regex_find_all(text, pattern)
+    if len(matches) == 0 {return detections}
+    parts := regex_split(text, pattern)
     mut out := detections
     mut seen := {}
+    mut start := len(parts[0])
     mut i := 0
     while i < len(matches) {
         value := matches[i]
         digits := only_digits(value)
         if len(digits) >= 13&&len(digits) <= 19&&luhn_valid(digits)&&has_key(seen, value) == 0 {
-            start := str_find(text, value)
             out = push(out, detection("det.credit_card.luhn", "payment_details", start, start + len(value), value, 0.99, "credit card candidate passed Luhn validation", "remove"))
             seen[value] := true
         }
+        start = start + len(value) + len(parts[i + 1])
         i = i + 1
     }
     return out
