@@ -1,4 +1,4 @@
-from src.util import get_or, lines_of, path_has_symlink_component, path_has_traversal, read_text
+from src.util import get_or, lines_of, path_has_symlink_component, path_has_traversal, read_text_bounded
 from src.version import POLICY_SCHEMA_VERSION
 
 func default_categories() {
@@ -39,7 +39,7 @@ export func load_policy(ref) {
     if file_exists(path)&&file_size(path) > 262144 {
         return {"ok": false, "error": "policy exceeds the 262144-byte Redact 1.0 limit: " + path}
     }
-    loaded := read_text(path)
+    loaded := read_text_bounded(path, 262144)
     if loaded["ok"] == false {
         return {"ok": false, "error": "policy not found: " + ref}
     }
@@ -99,6 +99,9 @@ export func parse_policy_yaml(text) {
         if contains(raw, "\t") == 1 {
             return policy_error(i, "tabs are not supported; use spaces")
         }
+        if unsupported_inline_comment(line) {
+            return policy_error(i, "inline comments are not supported")
+        }
         if unsupported_yaml_syntax(line) {
             return policy_error(i, "unsupported YAML structure or feature")
         }
@@ -143,6 +146,9 @@ export func parse_policy_yaml(text) {
                 if key == "name"&&(starts_with(val, "\"")||starts_with(val, "'")) {
                     policy[key] := unquote(val)
                 } else {
+                    if key == "name"&&ambiguous_plain_name(val) {
+                        return policy_error(i, "ambiguous policy name must be quoted")
+                    }
                     policy[key] := parse_scalar(val)
                 }
                 section = ""
@@ -269,9 +275,39 @@ func unsupported_yaml_syntax(line) {
 }
 
 func unsupported_scalar_shape(value) {
+    if value == ""||starts_with(value, "#") {return true}
+    if starts_with(value, "\"")&&len(value) >= 2&&ends_with(value, "\"") {
+        inner := substring(value, 1, len(value) - 1)
+        return contains(inner, "\"") == 1||contains(inner, "\\") == 1
+    }
+    if starts_with(value, "'")&&len(value) >= 2&&ends_with(value, "'") {
+        return contains(substring(value, 1, len(value) - 1), "'") == 1
+    }
     if starts_with(value, "\"")&&(len(value) < 2||ends_with(value, "\"") == false) {return true}
     if starts_with(value, "'")&&(len(value) < 2||ends_with(value, "'") == false) {return true}
-    return starts_with(value, "[")||starts_with(value, "{")||value == "|"||value == ">"
+    return starts_with(value, "[")||starts_with(value, "{")||value == "|"||value == ">"||contains(value, " #") == 1
+}
+
+func unsupported_inline_comment(line) {
+    mut quote := ""
+    mut i := 0
+    while i < len(line) {
+        ch := substring(line, i, i + 1)
+        if ch == "\""||ch == "'" {
+            if quote == "" {quote = ch}
+            else if quote == ch {quote = ""}
+        }
+        if ch == "#"&&quote == ""&&i > 0&&substring(line, i - 1, i) == " " {
+            return true
+        }
+        i = i + 1
+    }
+    return false
+}
+
+func ambiguous_plain_name(value) {
+    low := to_lower(value)
+    return low == "null"||value == "~"||low == "yes"||low == "no"||low == "on"||low == "off"||regex_match(value, "^[+-]?[0-9]+(?:\\.[0-9]+)?$")
 }
 
 func allowed_top_level_key(key) {
@@ -298,6 +334,16 @@ func is_legacy_term_key(key) {
 }
 
 func validate_policy_values(policy) {
+    mut term_count := 0
+    term_categories := ["person_names", "company_names", "customer_names", "product_names", "launch_strategy"]
+    mut tc := 0
+    while tc < len(term_categories) {
+        term_count = term_count + len(policy["terms"][term_categories[tc]])
+        tc = tc + 1
+    }
+    if term_count > 2048 {
+        return {"ok": false, "error": "policy exceeds the 2048 configured-term limit"}
+    }
     actions := ["remove", "placeholder", "role-preserve", "generalize", "range", "date-generalize"]
     cats := default_categories()
     mut i := 0

@@ -40,6 +40,13 @@ grep -Fq '[MID_FIVE_FIGURE_AMOUNT]' "$TEST_TMP/transformations.redacted.txt"
 "$KUJO_BIN" run redact.kujo pack examples/pack --policy examples/policy.yaml --out "$TEST_TMP/pack-b" --audit-dir "$TEST_TMP/pack-audit-b" > "$TEST_TMP/pack-b.json"
 jq -e '.command == "pack" and .processed == 2 and .failed == 0' "$TEST_TMP/pack-a.json" >/dev/null
 diff -ru "$TEST_TMP/pack-a" "$TEST_TMP/pack-b"
+test -z "$(find "$TEST_TMP" -maxdepth 1 -name '.redact-pack-*' -print)"
+if grep -R -Fq '.redact-pack-' "$TEST_TMP/pack-audit-a"; then
+  echo 'successful pack audit retained a staging path' >&2
+  exit 1
+fi
+jq -e --arg prefix "$TEST_TMP/pack-a/" '.output_path | startswith($prefix)' \
+  "$TEST_TMP/pack-audit-a/runs/$(ls "$TEST_TMP/pack-audit-a/runs" | head -1)/output-manifest.json" >/dev/null
 
 if "$KUJO_BIN" run redact.kujo scan examples/synthetic-note.md --policy examples/unsupported-nested-policy.yaml --audit-dir "$TEST_TMP/nested-audit" > "$TEST_TMP/nested.out" 2>&1; then
   echo "unsupported nested example unexpectedly succeeded" >&2

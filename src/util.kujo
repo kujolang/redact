@@ -67,6 +67,23 @@ export func read_text(path) {
     return {"ok": true, "text": loaded}
 }
 
+// Kujo 1.4 holds the parent directory and opens the final regular file
+// without following symlinks; the byte limit applies to the same handle.
+export func read_text_bounded(path, max_bytes) {
+    root := parent_of(path)
+    if root == "" {root = "."}
+    mut loaded := ""
+    try {
+        loaded = read_file_beneath(root, base_of(path), max_bytes)
+    } except err {
+        return {"ok": false, "error": "file is not valid UTF-8 or cannot be read: " + path}
+    }
+    if type(loaded) != "string" {
+        return {"ok": false, "error": "file is not valid UTF-8 or cannot be read: " + path}
+    }
+    return {"ok": true, "text": loaded}
+}
+
 export func path_has_traversal(path) {
     if type(path) != "string" {
         return true
@@ -261,15 +278,10 @@ export func unique_push(arr, value) {
     return push(arr, value)
 }
 
-// Kujo 1.0 len(string) counts Unicode scalars. Base64 exposes exact UTF-8
-// byte size without a filesystem round trip; the temporary encoding is bounded
-// by the input being measured and is not retained.
+// Kujo 1.4 supplies a constant-time UTF-8 byte count with no temporary
+// encoding allocation. len(string) continues to count Unicode scalars.
 export func utf8_size(text) {
-    encoded := encode_base64(text)
-    size := len(encoded) / 4 * 3
-    if ends_with(encoded, "==") {return size - 2}
-    if ends_with(encoded, "=") {return size - 1}
-    return size
+    return byte_length(text)
 }
 
 // Stable merge ordering preserves detector/category precedence on equal lengths.

@@ -13,7 +13,7 @@ func assert_true(value, message) {
 
 assert_true(only_digits("$1,234.٥ é🚀 56") == "123456", "digit filter remains ASCII-only")
 assert_true(utf8_size("") == 0, "empty UTF-8 size")
-assert_true(utf8_size("a") == 1&&utf8_size("ab") == 2&&utf8_size("abc") == 3, "base64 padding byte sizes")
+assert_true(utf8_size("a") == 1&&utf8_size("ab") == 2&&utf8_size("abc") == 3, "native UTF-8 byte sizes")
 assert_true(utf8_size("é🚀") == 6, "UTF-8 bytes differ from scalar count")
 assert_true(validate_output_content(repeat("🚀", 524288))["ok"], "exact UTF-8 output boundary accepted")
 assert_true(validate_output_content(repeat("🚀", 524289))["ok"] == false, "UTF-8 byte overflow rejected")
@@ -55,6 +55,12 @@ trailing_terms["person_names"] := ["i̇"]
 trailing["terms"] := trailing_terms
 trailing_detections := detect_document({"content": "İ"}, trailing)["detections"]
 assert_true(len(trailing_detections) == 1&&trailing_detections[0]["value"] == "İ", "short trailing candidate with lowercase expansion preserved")
+kelvin := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: kelvin\nterms:\n  person_names:\n    - K\n")["policy"]
+kelvin_hits := detect_document({"content": "K"}, kelvin)["detections"]
+assert_true(len(kelvin_hits) == 1&&kelvin_hits[0]["value"] == "K", "Unicode term still matches ASCII via lowercase expansion")
+unicode_budget := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: unicode-budget\nterms:\n  person_names:\n    - AbsentLongTerm\n")["policy"]
+limited := detect_document({"content": repeat("🚀", 150000)}, unicode_budget)
+assert_true(limited["ok"] == false&&contains(limited["error"], "candidate budget") == 1, "large Unicode dictionary scan fails within a work budget")
 role_policy := p
 role_policy["roles"] := {"x": "straße-ΟΣ İ"}
 role_doc := doc

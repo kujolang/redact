@@ -16,6 +16,7 @@ done < <(find src tests -type f -name '*.kujo' | sort)
 
 "$KUJO_BIN" run tests/redact_tests.kujo
 "$KUJO_BIN" run tests/hardening_tests.kujo
+"$KUJO_BIN" run tests/policy_fuzz_tests.kujo
 python3 tests/hardening_contract.py
 bash tests/cli_contract.sh
 bash tests/policy_adversarial.sh

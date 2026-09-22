@@ -2,7 +2,9 @@ from src.detect import detect_document
 from src.version import PRODUCT_VERSION, VERIFIER_SCHEMA_VERSION
 
 export func verify_document(doc, policy) {
-    detections := detect_document(doc, policy)["detections"]
+    detected := detect_document(doc, policy)
+    if detected["ok"] == false {return detected}
+    detections := detected["detections"]
     remaining_emails := category_count(detections, "emails")
     remaining_phones := category_count(detections, "phone_numbers")
     remaining_domains := category_count(detections, "domains")

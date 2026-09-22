@@ -1,0 +1,65 @@
+from src.policy import parse_policy_yaml
+
+func require(value, message) {
+    if value == false {
+        print("FAIL: " + message)
+        exit(1)
+    }
+}
+
+prefix := "schemaVersion: redact-policy/v1\nname: synthetic\n"
+invalid := [
+"name: other\n",
+"terms:\n  person_names:\n    - alpha # ignored\n",
+"terms:\n  person_names:\n    - # empty\n",
+"roles:\n  alpha: role # ignored\n",
+"roles:\n  alpha: \"unterminated\n",
+"roles:\n  alpha: \"escaped\\nvalue\"\n",
+"terms:\n  person_names:\n    - \"broken\\\"quote\"\n",
+"terms:\n  person_names:\n    - [alpha, beta]\n",
+"terms:\n  person_names:\n    - |\n      alpha\n",
+"terms:\n  person_names:\n    - &anchor alpha\n",
+"terms:\n  person_names:\n    - *alias\n",
+"terms:\n  person_names:\n    - !tag alpha\n",
+"terms:\n  person_names:\n    - alpha\n  person_names:\n    - beta\n",
+"terms:\n  person_names:\n    - alpha\nperson_dictionary:\n  - beta\n",
+"roles:\n  Alpha: owner\n  alpha: reviewer\n",
+"unknown: value\n",
+"person_names: unknowable\n",
+"\tterms:\n",
+"terms:\n    person_names:\n      - alpha\n"
+]
+mut i := 0
+while i < len(invalid) {
+    result := parse_policy_yaml(prefix + invalid[i])
+    require(result["ok"] == false, "invalid policy variant " + to_string(i) + " must fail")
+    i = i + 1
+}
+
+ambiguous := ["null", "~", "yes", "no", "on", "off", "123", "-12.50", "false", "true"]
+i = 0
+while i < len(ambiguous) {
+    raw := "schemaVersion: redact-policy/v1\nname: " + ambiguous[i] + "\n"
+    require(parse_policy_yaml(raw)["ok"] == false, "ambiguous plain name must fail")
+    i = i + 1
+}
+
+valid := [
+"# full-line comment\n",
+"terms:\n  person_names:\n    - alpha#literal\n",
+"terms:\n  person_names:\n    - \"alpha # literal\"\n",
+"roles:\n  \"alpha # literal\": \"owner # literal\"\n",
+"terms:\n  person_names:\n    - ΟΣ\n",
+"terms:\n  person_names:\n    - İ\n",
+"roles:\n  'synthetic person': 'research lead'\n"
+]
+i = 0
+while i < len(valid) {
+    require(parse_policy_yaml(prefix + valid[i])["ok"], "valid policy variant " + to_string(i) + " must parse")
+    i = i + 1
+}
+require(parse_policy_yaml("schemaVersion: redact-policy/v1\nname: \"null\"\n")["ok"], "explicitly quoted name remains supported")
+oversized_terms := prefix + "terms:\n  person_names:\n" + repeat("    - absent\n", 2049)
+too_many := parse_policy_yaml(oversized_terms)
+require(too_many["ok"] == false&&contains(too_many["error"], "2048 configured-term limit") == 1, "configured-term count limit fails closed")
+print("Policy scalar and malformed-YAML matrices passed")

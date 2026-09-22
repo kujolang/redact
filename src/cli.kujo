@@ -1,6 +1,6 @@
 from src.audit import audit_start, audit_input, audit_detections, audit_decisions, audit_transformations, audit_verify, audit_output, audit_warnings
 from src.detect import detect_document
-from src.document import load_document, validate_output_content, validate_output_path
+from src.document import MAX_OUTPUT_BYTES, load_document, validate_output_content, validate_output_path
 from src.policy import load_policy
 from src.transform import transform_document
 from src.util import ensure_dir, get_or, parent_of, path_has_symlink_component, path_has_traversal, truthy, validate_directory_target
@@ -93,6 +93,10 @@ func cmd_scan(input_path, policy, audit_dir, unsafe) {
     }
     audit_input(audit["run_dir"], doc)
     det := detect_document(doc, policy)
+    if det["ok"] == false {
+        print("ERROR: " + det["error"])
+        return 1
+    }
     audit_detections(audit["run_dir"], det["detections"], unsafe)
     summary := {
         "schemaVersion": CLI_SCHEMA_VERSION,
@@ -129,6 +133,10 @@ func cmd_sanitize(input_path, policy, audit_dir, parsed, unsafe, emit_output) {
     }
     audit_input(audit["run_dir"], doc)
     det := detect_document(doc, policy)
+    if det["ok"] == false {
+        print("ERROR: " + det["error"])
+        return 1
+    }
     audit_detections(audit["run_dir"], det["detections"], unsafe)
     transformed := transform_document(doc, det["detections"], policy)
     if transformed["ok"] == false {
@@ -142,13 +150,19 @@ func cmd_sanitize(input_path, policy, audit_dir, parsed, unsafe, emit_output) {
         return 1
     }
     report := verify_document(out_doc, policy)
+    if has_key(report, "ok")&&report["ok"] == false {
+        print("ERROR: " + report["error"])
+        return 1
+    }
     parent := parent_of(out_path)
     if parent != "" {ensure_dir(parent)}
     write_file_atomic(out_path, out_doc["content"], true)
     audit_decisions(audit["run_dir"], transformed["decisions"])
     audit_transformations(audit["run_dir"], transformed["transformations"])
     audit_verify(audit["run_dir"], report)
-    audit_output(audit["run_dir"], out_path, out_doc["content"])
+    if emit_output {
+        audit_output(audit["run_dir"], out_path, out_doc["content"])
+    }
     audit_warnings(audit["run_dir"], report["warnings"])
     summary := {
         "schemaVersion": CLI_SCHEMA_VERSION,
@@ -168,6 +182,9 @@ func cmd_sanitize(input_path, policy, audit_dir, parsed, unsafe, emit_output) {
     if should_fail_for_risk(report["risk_score"], flag(parsed, "fail-on-risk", "")) {
         return 1
     }
+    if emit_output == false {
+        return {"ok": true, "run_dir": audit["run_dir"]}
+    }
     return 0
 }
 
@@ -185,6 +202,10 @@ func cmd_verify(input_path, policy, audit_dir) {
     }
     audit_input(audit["run_dir"], doc)
     report := verify_document(doc, policy)
+    if has_key(report, "ok")&&report["ok"] == false {
+        print("ERROR: " + report["error"])
+        return 1
+    }
     audit_verify(audit["run_dir"], report)
     audit_warnings(audit["run_dir"], report["warnings"])
     print(to_json_pretty(report))
@@ -252,23 +273,78 @@ func cmd_pack(folder, policy, audit_dir, parsed, unsafe) {
         print("ERROR: pack input contains no supported .txt or .md files")
         return 1
     }
-    ensure_dir(out_dir)
+    parent := parent_of(out_dir)
+    if parent == "" {parent = "."}
+    ensure_dir(parent)
+    stage := ""
+    try {
+        stage = create_temp_dir(parent, ".redact-pack-")
+    } except err {
+        print("ERROR: cannot create private pack staging directory")
+        return 1
+    }
+    if stage == ""||path_has_symlink_component(stage) {
+        print("ERROR: unsafe pack staging directory")
+        return 1
+    }
     mut processed := 0
     mut failed := 0
+    mut staged_names := []
+    mut audit_runs := []
     mut i := 0
     while i < len(files) {
         name := files[i]
         path := folder + "/" + name
         if path_is_dir(path) == false&&(ends_with(to_lower(name), ".md")||ends_with(to_lower(name), ".txt")) {
-            out_path := out_dir + "/" + name
+            out_path := stage + "/" + name
             local := {"flags": {"out": out_path}, "positionals": [path]}
-            code := cmd_sanitize(path, policy, audit_dir, local, unsafe, false)
-            if code == 0 {
+            result := 1
+            try {
+                result = cmd_sanitize(path, policy, audit_dir, local, unsafe, false)
+            } except err {
+                print("ERROR: pack member could not be processed: " + name)
+            }
+            if type(result) == "dict"&&result["ok"] {
                 processed = processed + 1
+                staged_names = push(staged_names, name)
+                audit_runs = push(audit_runs, result["run_dir"])
             } else {
                 failed = failed + 1
             }
         }
+        i = i + 1
+    }
+    if failed > 0 {
+        cleanup_pack_stage(stage, files)
+        print(to_json_pretty({
+            "schemaVersion": CLI_SCHEMA_VERSION,
+            "productVersion": PRODUCT_VERSION,
+            "command": "pack",
+            "input": folder,
+            "output": out_dir,
+            "processed": 0,
+            "staged": processed,
+            "failed": failed,
+            "published": false,
+            "error": "pack failed; no output directory was published"
+        }))
+        return 1
+    }
+    mut published := false
+    try {
+        published = publish_directory_noreplace(stage, out_dir)
+    } except err {
+        published = false
+    }
+    if published == false {
+        cleanup_pack_stage(stage, files)
+        print("ERROR: pack output directory appeared or publication failed: " + out_dir)
+        return 1
+    }
+    i = 0
+    while i < len(staged_names) {
+        final_path := out_dir + "/" + staged_names[i]
+        audit_output(audit_runs[i], final_path, read_file_beneath(out_dir, staged_names[i], MAX_OUTPUT_BYTES))
         i = i + 1
     }
     print(to_json_pretty({
@@ -279,12 +355,26 @@ func cmd_pack(folder, policy, audit_dir, parsed, unsafe) {
         "output": out_dir,
         "processed": processed,
         "failed": failed,
+        "published": true,
         "unsafeOriginalsStored": unsafe
     }))
-    if failed > 0 {
-        return 1
-    }
     return 0
+}
+
+func cleanup_pack_stage(stage, names) {
+    if path_has_symlink_component(stage) {return}
+    mut i := 0
+    while i < len(names) {
+        name := names[i]
+        if ends_with(to_lower(name), ".md")||ends_with(to_lower(name), ".txt") {
+            path := stage + "/" + name
+            if path_exists(path)&&path_is_dir(path) == false {
+                try {delete_file(path)} except err {}
+            }
+        }
+        i = i + 1
+    }
+    try {os_rmdir(stage)} except err {}
 }
 
 func parse_args(tokens) {
