@@ -95,7 +95,8 @@ with tempfile.TemporaryDirectory(prefix="redact-install-smoke-") as tmp:
     assert len(list(pack.iterdir())) == 2
     print(f"Clean source-archive install smoke passed on {platform.system()} with Kujo 1.4.0")
     if args.benchmarks:
-        for workload in ("max-dictionary", "repeated-dictionary", "unicode-dictionary", "pack-batch"):
+        for workload in ("max-dictionary", "repeated-dictionary", "unicode-dictionary",
+                         "unicode-mixed", "replacement-expansion", "pack-batch", "pack-extended"):
             measured = subprocess.run([sys.executable, str(checkout / "scripts/benchmark.py"),
                                        "--repo", str(checkout), "--workload", workload,
                                        "--samples", "1", "--timeout", "120"],

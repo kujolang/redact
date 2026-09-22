@@ -30,12 +30,12 @@ dictionary cost, narrow policy parsing, clean-install coverage, and the
    repair is desired, design a verifiable publication-identity boundary and
    human-approved recovery workflow first; never delete published user data.
 5. **P2 — Performance envelope across platforms.** The
-   [synthetic Kujo 1.4.0 measurement](performance-1.4.0.md) covers five
+   [synthetic Kujo 1.4.0 measurement](performance-1.4.0.md) covers eight
    workloads on one local machine; the hosted install matrix also logs the
-   four boundary workloads across supported systems; Windows uses peak
+   seven boundary workloads across supported systems; Windows uses peak
    working-set measurement, which is not identical to POSIX `ru_maxrss`.
-   Measure other accepted Unicode/term combinations,
-   replacement expansion, aggregate pack work beyond sixteen members, and
+   The new two-category Unicode, expanded replacement, and 32-member pack
+   fixtures narrow the synthetic gap. Measure more accepted combinations and
    actual deployments before setting any service-level budget.
 6. **P2 — Future structured formats.** If demand warrants CSV, JSON, recursive
    packs or bounded stdin, implement only after the explicit syntax, audit,

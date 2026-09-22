@@ -14,6 +14,20 @@ its timings are not a like-for-like comparison with this runtime.
 | 1 MiB Unicode text, one absent Greek term | Not measured in the previous run | 14.348 s; 269.6 MB peak child RSS |
 | Sixteen 64 KiB synthetic files in a 1 MiB pack | Not measured in the previous run | 5.320 s; 19.4 MB peak child RSS |
 
+Additional single-sample local macOS x64 probes on candidate `777495c` and
+the same pinned runtime (each probe uses a separate process):
+
+| Accepted synthetic workload | Elapsed | Peak child RSS | Output |
+| --- | --- | --- | --- |
+| 524,288-byte Greek text, absent Unicode terms in two policy categories | 13.506 s | 138.7 MB | 524,288 bytes |
+| 280,000-byte repeated single-letter term expanded by replacement | 2.967 s | 145.4 MB | 1,540,000 bytes |
+| Thirty-two 64 KiB files in a 2 MiB pack | 12.795 s | 20.0 MB | 2,097,152 bytes |
+
+These are deterministic synthetic probes, not confidence intervals, maximum
+memory budgets, or actual-deployment measurements. The hosted matrix runs
+them on Linux, macOS and Windows as install-smoke evidence; do not compare
+Windows peak working set directly to POSIX peak RSS.
+
 For the small and repeated dictionaries, the before and after SHA-256 of output matched.
 The upper-bound fixture contains only synthetic, absent ASCII terms; it is
 not representative of all dictionaries. The previous implementation timed

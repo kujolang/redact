@@ -258,10 +258,11 @@ bash scripts/verify-all.sh
 A runtime version mismatch fails before the test workload starts. For repeatable
 synthetic performance measurements, run `python3 scripts/benchmark.py`; the
 `--workload max-dictionary --samples 1` case checks a 1 MiB input against a
-near-256 KiB policy. `repeated-dictionary`, `unicode-dictionary`, and
-`pack-batch` exercise frequent terms, contextual Unicode, and a 1 MiB
-multi-file pack. Each reports time and process peak memory where the host
-provides it. Timings
+near-256 KiB policy. `repeated-dictionary`, `unicode-dictionary`,
+`unicode-mixed`, `replacement-expansion`, `pack-batch`, and `pack-extended`
+exercise frequent terms, contextual Unicode across policy categories,
+bounded output expansion, and 1–2 MiB multi-file packs. Each reports time
+and process peak memory where the host provides it. Timings
 are observational, while output determinism and size contracts are CI gates.
 The [Kujo 1.4.0 synthetic comparison](docs/audits/performance-1.4.0.md)
 records the measured limits and the historical baseline's version difference.
