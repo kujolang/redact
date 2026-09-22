@@ -5,6 +5,8 @@ versions are independent contracts.
 
 ## [Unreleased]
 
+- Validate supported pack members before output creation, reject empty packs,
+  and test invalid-member handling without partial output.
 - Validate derived audit paths and literal POSIX filenames, reject special
   output files, and enforce UTF-8 output bounds before replacement allocation.
 - Preserve stable ordering with merge sorting, exact detection membership, and

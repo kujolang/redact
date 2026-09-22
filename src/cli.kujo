@@ -221,9 +221,38 @@ if out_dir == folder {
     print("ERROR: pack output directory must differ from the input folder")
     return 1
 }
-ensure_dir(out_dir)
 files := list_dir(folder)
 files = sort(files)
+// Validate every eligible member before creating or populating the pack.
+// cmd_sanitize reloads each file so its normal checks still apply at use time.
+mut eligible := 0
+mut index := 0
+while index < len(files) {
+    name := files[index]
+    path := folder + "/" + name
+    if ends_with(to_lower(name), ".md")||ends_with(to_lower(name), ".txt") {
+        if path_has_symlink_component(path) {
+            print("ERROR: pack member must not contain symbolic links: " + path)
+            return 1
+        }
+    if path_is_dir(path) {
+        index = index + 1
+        continue
+    }
+checked := load_document(path)
+if checked["ok"] == false {
+    print("ERROR: pack member " + name + ": " + checked["error"])
+    return 1
+}
+eligible = eligible + 1
+}
+index = index + 1
+}
+if eligible == 0 {
+    print("ERROR: pack input contains no supported .txt or .md files")
+    return 1
+}
+ensure_dir(out_dir)
 mut processed := 0
 mut failed := 0
 mut i := 0

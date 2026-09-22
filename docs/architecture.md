@@ -49,6 +49,8 @@ once per document, then lowercases each candidate in its original context;
 whole-document lowercasing is not equivalent for Greek final sigma. Configured terms are evaluated
 longest-first to prevent shorter configured terms from corrupting overlapping
 phrases. Pack inputs are sorted by filename and processed non-recursively.
+Supported members are validated before output creation, then checked again
+during processing; pack output is not atomic against later failures.
 
 ## Versioned contracts
 

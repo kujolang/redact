@@ -62,6 +62,21 @@ head -c 1048577 /dev/zero | tr '\0' 'A' > "$TEST_TMP/oversized.md"
 expect_failure "input exceeds the 1048576-byte" oversized-input \
   "$KUJO_BIN" run redact.kujo scan "$TEST_TMP/oversized.md" --policy fixtures/sample.policy.yaml --audit-dir "$TEST_TMP/oversized-audit"
 
+mkdir "$TEST_TMP/pack-input" "$TEST_TMP/empty-pack"
+printf '%s\n' 'Synthetic example' > "$TEST_TMP/pack-input/a.txt"
+cp "$TEST_TMP/oversized.md" "$TEST_TMP/pack-input/z.md"
+expect_failure "input exceeds the 1048576-byte" pack-preflight \
+  "$KUJO_BIN" run redact.kujo pack "$TEST_TMP/pack-input" --policy fixtures/sample.policy.yaml --out "$TEST_TMP/invalid-pack" --audit-dir "$TEST_TMP/pack-audit"
+test ! -e "$TEST_TMP/invalid-pack"
+test ! -e "$TEST_TMP/pack-audit"
+expect_failure "no supported .txt or .md files" empty-pack \
+  "$KUJO_BIN" run redact.kujo pack "$TEST_TMP/empty-pack" --policy fixtures/sample.policy.yaml --out "$TEST_TMP/empty-output" --audit-dir "$TEST_TMP/empty-audit"
+test ! -e "$TEST_TMP/empty-output"
+ln -s "$ROOT/fixtures/sample.md" "$TEST_TMP/pack-input/b.md"
+expect_failure "pack member must not contain symbolic links" pack-symlink \
+  "$KUJO_BIN" run redact.kujo pack "$TEST_TMP/pack-input" --policy fixtures/sample.policy.yaml --out "$TEST_TMP/link-pack" --audit-dir "$TEST_TMP/link-audit"
+test ! -e "$TEST_TMP/link-pack"
+
 printf '\377' > "$TEST_TMP/invalid-utf8.md"
 expect_failure "file is not valid UTF-8 or cannot be read" invalid-utf8 \
   "$KUJO_BIN" run redact.kujo scan "$TEST_TMP/invalid-utf8.md" --policy fixtures/sample.policy.yaml --audit-dir "$TEST_TMP/utf8-audit"

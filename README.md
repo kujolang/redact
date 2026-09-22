@@ -144,6 +144,11 @@ not assurances that an unmatched value is safe.
 
 Repeated exact values reuse the same replacement. Folder entries are sorted
 before pack processing so output content and ordering are deterministic.
+Pack validates supported members before creating its output directory and
+rejects empty packs. A later I/O change or transformation failure may still
+leave a partial pack; a nonzero exit and `failed` count mean it must not be
+shared. Pack reads each eligible input again during processing to reapply the
+normal path, size, and UTF-8 checks. It is not an atomic directory transaction.
 
 ## CLI Reference
 
@@ -240,6 +245,9 @@ fixture commands, examples, product-version consistency, formatting, lint,
 local Markdown links, generated-artifact hygiene, Kennel validation, and
 ShipCheck. Release candidates additionally require the
 [Workcell proof and hosted CI receipt](docs/release-process.md).
+
+The [next review backlog](docs/audits/next-review-2026-09-22.md) separates
+candidate enhancements from verified 1.0 behavior and release-only approvals.
 
 ## Compatibility and Upgrades
 
