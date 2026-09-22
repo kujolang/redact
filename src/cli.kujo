@@ -1,9 +1,9 @@
-from src.audit import audit_start, audit_input, audit_detections, audit_decisions, audit_transformations, audit_verify, audit_output, audit_warnings
+from src.audit import audit_start, audit_input, audit_detections, audit_decisions, audit_transformations, audit_verify, audit_output, audit_pack_publication, audit_warnings
 from src.detect import detect_document
 from src.document import MAX_OUTPUT_BYTES, load_document, validate_output_content, validate_output_path
 from src.policy import load_policy
 from src.transform import transform_document
-from src.util import ensure_dir, get_or, normalize_cli_path, parent_of, path_has_symlink_component, path_has_traversal, truthy, validate_directory_target
+from src.util import content_hash, ensure_dir, get_or, normalize_cli_path, parent_of, path_has_symlink_component, path_has_traversal, truthy, validate_directory_target
 from src.verify import verify_document
 from src.version import CLI_SCHEMA_VERSION, PRODUCT_VERSION
 
@@ -330,6 +330,24 @@ func cmd_pack(folder, policy, audit_dir, parsed, unsafe) {
         }))
         return 1
     }
+    mut staged_hashes := []
+    i = 0
+    while i < len(staged_names) {
+        final_path := out_dir + "/" + staged_names[i]
+        mut intent_ok := true
+        try {
+            content := read_file_beneath(stage, staged_names[i], MAX_OUTPUT_BYTES)
+            staged_hashes = push(staged_hashes, audit_pack_publication(audit_runs[i], final_path, content, "pending"))
+        } except err {
+            intent_ok = false
+        }
+        if intent_ok == false {
+            cleanup_pack_stage(stage, files)
+            print("ERROR: cannot record pack audit intent; no output directory was published")
+            return 1
+        }
+        i = i + 1
+    }
     mut published := false
     try {
         published = publish_directory_noreplace(stage, out_dir)
@@ -342,9 +360,20 @@ func cmd_pack(folder, policy, audit_dir, parsed, unsafe) {
         return 1
     }
     i = 0
+    mut audit_failed := 0
     while i < len(staged_names) {
         final_path := out_dir + "/" + staged_names[i]
-        audit_output(audit_runs[i], final_path, read_file_beneath(out_dir, staged_names[i], MAX_OUTPUT_BYTES))
+        try {
+            content := read_file_beneath(out_dir, staged_names[i], MAX_OUTPUT_BYTES)
+            if content_hash(content) != staged_hashes[i] {
+                audit_failed = audit_failed + 1
+            } else {
+                audit_output(audit_runs[i], final_path, content)
+                audit_pack_publication(audit_runs[i], final_path, content, "published")
+            }
+        } except err {
+            audit_failed = audit_failed + 1
+        }
         i = i + 1
     }
     print(to_json_pretty({
@@ -356,8 +385,11 @@ func cmd_pack(folder, policy, audit_dir, parsed, unsafe) {
         "processed": processed,
         "failed": failed,
         "published": true,
+        "auditComplete": audit_failed == 0,
+        "auditFailed": audit_failed,
         "unsafeOriginalsStored": unsafe
     }))
+    if audit_failed > 0 {return 1}
     return 0
 }
 
