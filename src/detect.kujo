@@ -22,14 +22,14 @@ export func detect_document(doc, policy) {
             text_chars = regex_find_all(text, "(?s).")
             break
         }
-    c = c + 1
-}
-detections = append_terms(detections, text_chars, policy_terms(policy, "person_names"), "dictionary.person", "person_names", "role-preserve")
-detections = append_terms(detections, text_chars, policy_terms(policy, "company_names"), "dictionary.company", "company_names", "placeholder")
-detections = append_terms(detections, text_chars, policy_terms(policy, "customer_names"), "dictionary.customer", "customer_names", "placeholder")
-detections = append_terms(detections, text_chars, policy_terms(policy, "product_names"), "dictionary.product", "product_names", "placeholder")
-detections = append_terms(detections, text_chars, policy_terms(policy, "launch_strategy"), "dictionary.strategy", "launch_strategy", "generalize")
-return {"ok": true, "detections": detections}
+        c = c + 1
+    }
+    detections = append_terms(detections, text_chars, policy_terms(policy, "person_names"), "dictionary.person", "person_names", "role-preserve")
+    detections = append_terms(detections, text_chars, policy_terms(policy, "company_names"), "dictionary.company", "company_names", "placeholder")
+    detections = append_terms(detections, text_chars, policy_terms(policy, "customer_names"), "dictionary.customer", "customer_names", "placeholder")
+    detections = append_terms(detections, text_chars, policy_terms(policy, "product_names"), "dictionary.product", "product_names", "placeholder")
+    detections = append_terms(detections, text_chars, policy_terms(policy, "launch_strategy"), "dictionary.strategy", "launch_strategy", "generalize")
+    return {"ok": true, "detections": detections}
 }
 
 func append_phones(detections, text) {
@@ -45,9 +45,9 @@ func append_phones(detections, text) {
             out = push(out, detection("det.phone", "phone_numbers", start, start + len(value), value, 0.86, "deterministic phone pattern match", "remove"))
             seen[value] := true
         }
-    i = i + 1
-}
-return out
+        i = i + 1
+    }
+    return out
 }
 
 func append_terms(detections, text_chars, terms, detector_id, category, suggested_action) {
@@ -66,29 +66,29 @@ func append_terms(detections, text_chars, terms, detector_id, category, suggeste
                 out = push(out, detection(detector_id, category, start, start + len(value), value, 1.0, "configured sensitive term", suggested_action))
                 seen[value] := true
             }
-        start_at = found["start"] + len(value)
-        found = find_case_variant_from(text_chars, term, start_at)
+            start_at = found["start"] + len(value)
+            found = find_case_variant_from(text_chars, term, start_at)
+        }
+        i = i + 1
     }
-i = i + 1
-}
-return out
+    return out
 }
 
 func find_case_variant_from(text_chars, term, start_at) {
     if term == "" {
         return {"value": "", "start": - 1}
     }
-low_term := to_lower(term)
-n := len(term)
-mut i := start_at
-while i < len(text_chars) {
-    candidate := join(slice(text_chars, i, i + n), "")
-    if to_lower(candidate) == low_term {
-        return {"value": candidate, "start": i}
+    low_term := to_lower(term)
+    n := len(term)
+    mut i := start_at
+    while i < len(text_chars) {
+        candidate := join(slice(text_chars, i, i + n), "")
+        if to_lower(candidate) == low_term {
+            return {"value": candidate, "start": i}
+        }
+        i = i + 1
     }
-i = i + 1
-}
-return {"value": "", "start": - 1}
+    return {"value": "", "start": - 1}
 }
 
 func append_regex(detections, text, detector_id, category, pattern, suggested_action, confidence) {
@@ -103,9 +103,9 @@ func append_regex(detections, text, detector_id, category, pattern, suggested_ac
             out = push(out, detection(detector_id, category, start, start + len(value), value, confidence, "deterministic pattern match", suggested_action))
             seen[value] := true
         }
-    i = i + 1
-}
-return out
+        i = i + 1
+    }
+    return out
 }
 
 func append_money(detections, text) {
@@ -132,9 +132,9 @@ func append_credit_cards(detections, text) {
             out = push(out, detection("det.credit_card.luhn", "payment_details", start, start + len(value), value, 0.99, "credit card candidate passed Luhn validation", "remove"))
             seen[value] := true
         }
-    i = i + 1
-}
-return out
+        i = i + 1
+    }
+    return out
 }
 
 func detection(detector_id, category, start, end, value, confidence, reason, suggested_action) {
@@ -176,10 +176,10 @@ func luhn_valid(digits) {
             if d > 9 {
                 d = d - 9
             }
+        }
+        sum = sum + d
+        alt = alt == false
+        i = i - 1
     }
-sum = sum + d
-alt = alt == false
-i = i - 1
-}
-return sum % 10 == 0
+    return sum % 10 == 0
 }

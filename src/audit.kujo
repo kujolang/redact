@@ -20,18 +20,18 @@ export func audit_start(root, command, input_path, policy, unsafe_store_original
         "deterministic": true,
         "unsafeOriginalsStored": unsafe_store_originals
     }
-write_file_atomic(run_dir + "/run.json", to_json_pretty(run), true)
-write_file_atomic(run_dir + "/policy.snapshot.yaml", safe_policy_snapshot(policy), true)
-write_file_atomic(run_dir + "/detections.jsonl", "", true)
-write_file_atomic(run_dir + "/decisions.jsonl", "", true)
-write_file_atomic(run_dir + "/transformations.jsonl", "", true)
-write_file_atomic(run_dir + "/warnings.jsonl", "", true)
-if unsafe_store_originals {
-    append_text(run_dir + "/warnings.jsonl", json_line({
-        "warning": "DANGER: --unsafe-store-originals stored raw detected values in detections.jsonl; isolate and delete this audit run after review"
-    }))
-}
-return {"ok": true, "run_dir": run_dir, "run_id": run_id}
+    write_file_atomic(run_dir + "/run.json", to_json_pretty(run), true)
+    write_file_atomic(run_dir + "/policy.snapshot.yaml", safe_policy_snapshot(policy), true)
+    write_file_atomic(run_dir + "/detections.jsonl", "", true)
+    write_file_atomic(run_dir + "/decisions.jsonl", "", true)
+    write_file_atomic(run_dir + "/transformations.jsonl", "", true)
+    write_file_atomic(run_dir + "/warnings.jsonl", "", true)
+    if unsafe_store_originals {
+        append_text(run_dir + "/warnings.jsonl", json_line({
+            "warning": "DANGER: --unsafe-store-originals stored raw detected values in detections.jsonl; isolate and delete this audit run after review"
+        }))
+    }
+    return {"ok": true, "run_dir": run_dir, "run_id": run_id}
 }
 
 func safe_policy_snapshot(policy) {
@@ -61,10 +61,10 @@ func safe_policy_snapshot(policy) {
         out = out + key + ": " + policy[key] + "\n"
         i = i + 1
     }
-out = out + "preserve_task_structure: " + to_string(policy["preserve_task_structure"]) + "\n"
-out = out + "write_entity_map: false\n"
-out = out + "ai_assist: false\n"
-return out
+    out = out + "preserve_task_structure: " + to_string(policy["preserve_task_structure"]) + "\n"
+    out = out + "write_entity_map: false\n"
+    out = out + "ai_assist: false\n"
+    return out
 }
 
 func configured_term_count(policy) {
@@ -75,7 +75,7 @@ func configured_term_count(policy) {
         total = total + len(policy["terms"][term_categories[i]])
         i = i + 1
     }
-return total
+    return total
 }
 
 export func audit_input(run_dir, doc) {
@@ -87,7 +87,7 @@ export func audit_input(run_dir, doc) {
         "length": len(doc["content"]),
         "warnings": doc["warnings"]
     }
-write_file_atomic(run_dir + "/input-manifest.json", to_json_pretty(manifest), true)
+    write_file_atomic(run_dir + "/input-manifest.json", to_json_pretty(manifest), true)
 }
 
 export func audit_detections(run_dir, detections, unsafe_store_originals) {
@@ -104,12 +104,12 @@ export func audit_detections(run_dir, detections, unsafe_store_originals) {
             "reason": d["reason"],
             "suggested_action": d["suggested_action"]
         }
-    if unsafe_store_originals {
-        entry["original"] := d["value"]
+        if unsafe_store_originals {
+            entry["original"] := d["value"]
+        }
+        append_text(run_dir + "/detections.jsonl", json_line(entry))
+        i = i + 1
     }
-append_text(run_dir + "/detections.jsonl", json_line(entry))
-i = i + 1
-}
 }
 
 export func audit_decisions(run_dir, decisions) {
@@ -140,10 +140,10 @@ export func audit_output(run_dir, out_path, content) {
         "content_hash": output_hash,
         "length": len(content)
     }
-write_file_atomic(run_dir + "/output-manifest.json", to_json_pretty(manifest), true)
-write_file_atomic(run_dir + "/hashes.json", to_json_pretty({
-    "output": output_hash
-}), true)
+    write_file_atomic(run_dir + "/output-manifest.json", to_json_pretty(manifest), true)
+    write_file_atomic(run_dir + "/hashes.json", to_json_pretty({
+        "output": output_hash
+    }), true)
 }
 
 export func audit_warnings(run_dir, warnings) {

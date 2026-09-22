@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 KUJO_BIN="${KUJO_BIN:-/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/kujo}"
 VERSION="$(tr -d '[:space:]' < "$ROOT/VERSION")"
-RELEASED_KUJO_COMMIT="2b3e07d398016e92008d8399e79c441e012dce38"
+RELEASED_KUJO_COMMIT="266a8902068a14c3d17f803bef467dc28f1fe162"
 
 toml_value() {
   local file="$1" section="$2" key="$3"
@@ -26,11 +26,11 @@ test "$(toml_value "$ROOT/kennel.toml" package version)" = "$VERSION"
 test "$(toml_value "$ROOT/kennel.toml" package.status stage)" = "production"
 test "$(toml_value "$ROOT/kennel.toml" package.status stability)" = "stable"
 test "$(toml_value "$ROOT/kennel.toml" package.status public_api)" = "true"
-test "$(toml_value "$ROOT/kennel.toml" kujo minimum_version)" = "1.0.0"
+test "$(toml_value "$ROOT/kennel.toml" kujo minimum_version)" = "1.4.0"
 test "$(tr -d '[:space:]' < "$ROOT/RUNTIME_VERSION")" = "$RELEASED_KUJO_COMMIT"
 actual_runtime="$("$KUJO_BIN" --version)"
-if [[ "$actual_runtime" != "kujo 1.0.0" ]]; then
-  printf 'Expected kujo 1.0.0 from RUNTIME_VERSION; found %s. Set KUJO_BIN to the pinned runtime.\n' "$actual_runtime" >&2
+if [[ "$actual_runtime" != "kujo 1.4.0" ]]; then
+  printf 'Expected kujo 1.4.0 from RUNTIME_VERSION; found %s. Set KUJO_BIN to the pinned runtime.\n' "$actual_runtime" >&2
   exit 1
 fi
 test "$(cd "$ROOT" && "$KUJO_BIN" run redact.kujo version)" = "redact $VERSION"

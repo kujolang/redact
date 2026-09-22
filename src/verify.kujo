@@ -15,49 +15,49 @@ export func verify_document(doc, policy) {
     if remaining_emails > 0 {
         warnings = push(warnings, "remaining email pattern")
     }
-if remaining_phones > 0 {
-    warnings = push(warnings, "remaining phone pattern")
-}
-if remaining_domains > 0 {
-    warnings = push(warnings, "remaining URL/domain pattern")
-}
-if remaining_keys > 0 {
-    warnings = push(warnings, "remaining API key pattern")
-}
-if remaining_payment > 0 {
-    warnings = push(warnings, "remaining Luhn-valid payment detail pattern")
-}
-if remaining_dates > 0 {
-    warnings = push(warnings, "remaining exact date pattern")
-}
-if remaining_money > 0 {
-    warnings = push(warnings, "remaining money amount pattern")
-}
-if unresolved > 0 {
-    warnings = push(warnings, "unresolved configured sensitive terms")
-}
-score := "low"
-reason := "no deterministic leakage checks fired"
-total := remaining_emails + remaining_phones + remaining_domains + remaining_keys + remaining_payment + remaining_dates + remaining_money + unresolved
-if total > 0 {
-    score = "high"
-    reason = "deterministic verifier found remaining sensitive patterns or configured terms"
-}
-return {
-    "schemaVersion": VERIFIER_SCHEMA_VERSION,
-    "productVersion": PRODUCT_VERSION,
-    "risk_score": score,
-    "reason": reason,
-    "remaining_emails": remaining_emails,
-    "remaining_phone_numbers": remaining_phones,
-    "remaining_urls_or_domains": remaining_domains,
-    "remaining_api_key_patterns": remaining_keys,
-    "remaining_payment_details": remaining_payment,
-    "remaining_exact_dates": remaining_dates,
-    "remaining_money_amounts": remaining_money,
-    "unresolved_configured_terms": unresolved,
-    "warnings": warnings
-}
+    if remaining_phones > 0 {
+        warnings = push(warnings, "remaining phone pattern")
+    }
+    if remaining_domains > 0 {
+        warnings = push(warnings, "remaining URL/domain pattern")
+    }
+    if remaining_keys > 0 {
+        warnings = push(warnings, "remaining API key pattern")
+    }
+    if remaining_payment > 0 {
+        warnings = push(warnings, "remaining Luhn-valid payment detail pattern")
+    }
+    if remaining_dates > 0 {
+        warnings = push(warnings, "remaining exact date pattern")
+    }
+    if remaining_money > 0 {
+        warnings = push(warnings, "remaining money amount pattern")
+    }
+    if unresolved > 0 {
+        warnings = push(warnings, "unresolved configured sensitive terms")
+    }
+    score := "low"
+    reason := "no deterministic leakage checks fired"
+    total := remaining_emails + remaining_phones + remaining_domains + remaining_keys + remaining_payment + remaining_dates + remaining_money + unresolved
+    if total > 0 {
+        score = "high"
+        reason = "deterministic verifier found remaining sensitive patterns or configured terms"
+    }
+    return {
+        "schemaVersion": VERIFIER_SCHEMA_VERSION,
+        "productVersion": PRODUCT_VERSION,
+        "risk_score": score,
+        "reason": reason,
+        "remaining_emails": remaining_emails,
+        "remaining_phone_numbers": remaining_phones,
+        "remaining_urls_or_domains": remaining_domains,
+        "remaining_api_key_patterns": remaining_keys,
+        "remaining_payment_details": remaining_payment,
+        "remaining_exact_dates": remaining_dates,
+        "remaining_money_amounts": remaining_money,
+        "unresolved_configured_terms": unresolved,
+        "warnings": warnings
+    }
 }
 
 func category_count(detections, category) {
@@ -67,7 +67,7 @@ func category_count(detections, category) {
         if detections[i]["category"] == category {
             total = total + 1
         }
-    i = i + 1
-}
-return total
+        i = i + 1
+    }
+    return total
 }

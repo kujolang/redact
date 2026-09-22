@@ -12,71 +12,71 @@ export func main(argv) {
         print_help()
         return 2
     }
-command := argv[0]
-if command == "--help"||command == "help" {
-    print_help()
-    return 0
-}
-if command == "version" {
-    print("redact " + PRODUCT_VERSION)
-    return 0
-}
-if known_command(command) == false {
-    print("ERROR: unknown command: " + command)
-    return 2
-}
-parsed := parse_args(slice_from(argv, 1))
-if parsed["ok"] == false {
-    print("ERROR: " + parsed["error"])
-    return 2
-}
-pos := parsed["positionals"]
-if len(pos) < 1 {
-    print("ERROR: missing input path")
-    return 2
-}
-if len(pos) > 1 {
-    print("ERROR: unexpected positional argument: " + pos[1])
-    return 2
-}
-args_check := validate_command_args(command, parsed)
-if args_check["ok"] == false {
-    print("ERROR: " + args_check["error"])
-    return 2
-}
-input_path := pos[0]
-policy_ref := flag(parsed, "policy", "basic")
-loaded_policy := load_policy(policy_ref)
-if loaded_policy["ok"] == false {
-    print("ERROR: " + loaded_policy["error"])
-    return 1
-}
-policy := loaded_policy["policy"]
-audit_dir := flag(parsed, "audit-dir", ".redact")
-audit_path_check := validate_directory_target(audit_dir, "audit directory")
-if audit_path_check["ok"] == false {
-    print("ERROR: " + audit_path_check["error"])
-    return 1
-}
-unsafe := truthy(get_or(parsed["flags"], "unsafe-store-originals", false))
-
-if command == "scan" {
-    return cmd_scan(input_path, policy, audit_dir, unsafe)
-}
-if command == "sanitize" {
-    return cmd_sanitize(input_path, policy, audit_dir, parsed, unsafe, true)
-}
-if command == "verify" {
-    if unsafe {
-        print("ERROR: --unsafe-store-originals is only valid for scan, sanitize, and pack")
+    command := argv[0]
+    if command == "--help"||command == "help" {
+        print_help()
+        return 0
+    }
+    if command == "version" {
+        print("redact " + PRODUCT_VERSION)
+        return 0
+    }
+    if known_command(command) == false {
+        print("ERROR: unknown command: " + command)
         return 2
     }
-return cmd_verify(input_path, policy, audit_dir)
-}
-if command == "pack" {
-    return cmd_pack(input_path, policy, audit_dir, parsed, unsafe)
-}
-return 2
+    parsed := parse_args(slice_from(argv, 1))
+    if parsed["ok"] == false {
+        print("ERROR: " + parsed["error"])
+        return 2
+    }
+    pos := parsed["positionals"]
+    if len(pos) < 1 {
+        print("ERROR: missing input path")
+        return 2
+    }
+    if len(pos) > 1 {
+        print("ERROR: unexpected positional argument: " + pos[1])
+        return 2
+    }
+    args_check := validate_command_args(command, parsed)
+    if args_check["ok"] == false {
+        print("ERROR: " + args_check["error"])
+        return 2
+    }
+    input_path := pos[0]
+    policy_ref := flag(parsed, "policy", "basic")
+    loaded_policy := load_policy(policy_ref)
+    if loaded_policy["ok"] == false {
+        print("ERROR: " + loaded_policy["error"])
+        return 1
+    }
+    policy := loaded_policy["policy"]
+    audit_dir := flag(parsed, "audit-dir", ".redact")
+    audit_path_check := validate_directory_target(audit_dir, "audit directory")
+    if audit_path_check["ok"] == false {
+        print("ERROR: " + audit_path_check["error"])
+        return 1
+    }
+    unsafe := truthy(get_or(parsed["flags"], "unsafe-store-originals", false))
+
+    if command == "scan" {
+        return cmd_scan(input_path, policy, audit_dir, unsafe)
+    }
+    if command == "sanitize" {
+        return cmd_sanitize(input_path, policy, audit_dir, parsed, unsafe, true)
+    }
+    if command == "verify" {
+        if unsafe {
+            print("ERROR: --unsafe-store-originals is only valid for scan, sanitize, and pack")
+            return 2
+        }
+        return cmd_verify(input_path, policy, audit_dir)
+    }
+    if command == "pack" {
+        return cmd_pack(input_path, policy, audit_dir, parsed, unsafe)
+    }
+    return 2
 }
 
 func cmd_scan(input_path, policy, audit_dir, unsafe) {
@@ -85,28 +85,28 @@ func cmd_scan(input_path, policy, audit_dir, unsafe) {
         print("ERROR: " + doc_res["error"])
         return 1
     }
-doc := doc_res["document"]
-audit := audit_start(audit_dir, "scan", input_path, policy, unsafe)
-if audit["ok"] == false {
-    print("ERROR: " + audit["error"])
-    return 1
-}
-audit_input(audit["run_dir"], doc)
-det := detect_document(doc, policy)
-audit_detections(audit["run_dir"], det["detections"], unsafe)
-summary := {
-    "schemaVersion": CLI_SCHEMA_VERSION,
-    "productVersion": PRODUCT_VERSION,
-    "command": "scan",
-    "input": input_path,
-    "policy": policy["name"],
-    "detections": len(det["detections"]),
-    "categories": category_counts(det["detections"]),
-    "audit_dir": audit["run_dir"],
-    "unsafeOriginalsStored": unsafe
-}
-print(to_json_pretty(summary))
-return 0
+    doc := doc_res["document"]
+    audit := audit_start(audit_dir, "scan", input_path, policy, unsafe)
+    if audit["ok"] == false {
+        print("ERROR: " + audit["error"])
+        return 1
+    }
+    audit_input(audit["run_dir"], doc)
+    det := detect_document(doc, policy)
+    audit_detections(audit["run_dir"], det["detections"], unsafe)
+    summary := {
+        "schemaVersion": CLI_SCHEMA_VERSION,
+        "productVersion": PRODUCT_VERSION,
+        "command": "scan",
+        "input": input_path,
+        "policy": policy["name"],
+        "detections": len(det["detections"]),
+        "categories": category_counts(det["detections"]),
+        "audit_dir": audit["run_dir"],
+        "unsafeOriginalsStored": unsafe
+    }
+    print(to_json_pretty(summary))
+    return 0
 }
 
 func cmd_sanitize(input_path, policy, audit_dir, parsed, unsafe, emit_output) {
@@ -115,60 +115,60 @@ func cmd_sanitize(input_path, policy, audit_dir, parsed, unsafe, emit_output) {
         print("ERROR: " + doc_res["error"])
         return 1
     }
-doc := doc_res["document"]
-out_path := flag(parsed, "out", default_output_path(input_path))
-output_check := validate_output_path(input_path, out_path)
-if output_check["ok"] == false {
-    print("ERROR: " + output_check["error"])
-    return 1
-}
-audit := audit_start(audit_dir, "sanitize", input_path, policy, unsafe)
-if audit["ok"] == false {
-    print("ERROR: " + audit["error"])
-    return 1
-}
-audit_input(audit["run_dir"], doc)
-det := detect_document(doc, policy)
-audit_detections(audit["run_dir"], det["detections"], unsafe)
-transformed := transform_document(doc, det["detections"], policy)
-if transformed["ok"] == false {
-    print("ERROR: " + transformed["error"])
-    return 1
-}
-out_doc := transformed["document"]
-output_content_check := validate_output_content(out_doc["content"])
-if output_content_check["ok"] == false {
-    print("ERROR: " + output_content_check["error"])
-    return 1
-}
-report := verify_document(out_doc, policy)
-parent := parent_of(out_path)
-if parent != "" {ensure_dir(parent)}
-write_file_atomic(out_path, out_doc["content"], true)
-audit_decisions(audit["run_dir"], transformed["decisions"])
-audit_transformations(audit["run_dir"], transformed["transformations"])
-audit_verify(audit["run_dir"], report)
-audit_output(audit["run_dir"], out_path, out_doc["content"])
-audit_warnings(audit["run_dir"], report["warnings"])
-summary := {
-    "schemaVersion": CLI_SCHEMA_VERSION,
-    "productVersion": PRODUCT_VERSION,
-    "command": "sanitize",
-    "input": input_path,
-    "output": out_path,
-    "policy": policy["name"],
-    "detections": len(det["detections"]),
-    "risk_score": report["risk_score"],
-    "audit_dir": audit["run_dir"],
-    "unsafeOriginalsStored": unsafe
-}
-if emit_output {
-    print(to_json_pretty(summary))
-}
-if should_fail_for_risk(report["risk_score"], flag(parsed, "fail-on-risk", "")) {
-    return 1
-}
-return 0
+    doc := doc_res["document"]
+    out_path := flag(parsed, "out", default_output_path(input_path))
+    output_check := validate_output_path(input_path, out_path)
+    if output_check["ok"] == false {
+        print("ERROR: " + output_check["error"])
+        return 1
+    }
+    audit := audit_start(audit_dir, "sanitize", input_path, policy, unsafe)
+    if audit["ok"] == false {
+        print("ERROR: " + audit["error"])
+        return 1
+    }
+    audit_input(audit["run_dir"], doc)
+    det := detect_document(doc, policy)
+    audit_detections(audit["run_dir"], det["detections"], unsafe)
+    transformed := transform_document(doc, det["detections"], policy)
+    if transformed["ok"] == false {
+        print("ERROR: " + transformed["error"])
+        return 1
+    }
+    out_doc := transformed["document"]
+    output_content_check := validate_output_content(out_doc["content"])
+    if output_content_check["ok"] == false {
+        print("ERROR: " + output_content_check["error"])
+        return 1
+    }
+    report := verify_document(out_doc, policy)
+    parent := parent_of(out_path)
+    if parent != "" {ensure_dir(parent)}
+    write_file_atomic(out_path, out_doc["content"], true)
+    audit_decisions(audit["run_dir"], transformed["decisions"])
+    audit_transformations(audit["run_dir"], transformed["transformations"])
+    audit_verify(audit["run_dir"], report)
+    audit_output(audit["run_dir"], out_path, out_doc["content"])
+    audit_warnings(audit["run_dir"], report["warnings"])
+    summary := {
+        "schemaVersion": CLI_SCHEMA_VERSION,
+        "productVersion": PRODUCT_VERSION,
+        "command": "sanitize",
+        "input": input_path,
+        "output": out_path,
+        "policy": policy["name"],
+        "detections": len(det["detections"]),
+        "risk_score": report["risk_score"],
+        "audit_dir": audit["run_dir"],
+        "unsafeOriginalsStored": unsafe
+    }
+    if emit_output {
+        print(to_json_pretty(summary))
+    }
+    if should_fail_for_risk(report["risk_score"], flag(parsed, "fail-on-risk", "")) {
+        return 1
+    }
+    return 0
 }
 
 func cmd_verify(input_path, policy, audit_dir) {
@@ -177,21 +177,21 @@ func cmd_verify(input_path, policy, audit_dir) {
         print("ERROR: " + doc_res["error"])
         return 1
     }
-doc := doc_res["document"]
-audit := audit_start(audit_dir, "verify", input_path, policy, false)
-if audit["ok"] == false {
-    print("ERROR: " + audit["error"])
-    return 1
-}
-audit_input(audit["run_dir"], doc)
-report := verify_document(doc, policy)
-audit_verify(audit["run_dir"], report)
-audit_warnings(audit["run_dir"], report["warnings"])
-print(to_json_pretty(report))
-if report["risk_score"] == "high" {
-    return 1
-}
-return 0
+    doc := doc_res["document"]
+    audit := audit_start(audit_dir, "verify", input_path, policy, false)
+    if audit["ok"] == false {
+        print("ERROR: " + audit["error"])
+        return 1
+    }
+    audit_input(audit["run_dir"], doc)
+    report := verify_document(doc, policy)
+    audit_verify(audit["run_dir"], report)
+    audit_warnings(audit["run_dir"], report["warnings"])
+    print(to_json_pretty(report))
+    if report["risk_score"] == "high" {
+        return 1
+    }
+    return 0
 }
 
 func cmd_pack(folder, policy, audit_dir, parsed, unsafe) {
@@ -199,92 +199,92 @@ func cmd_pack(folder, policy, audit_dir, parsed, unsafe) {
         print("ERROR: pack input must not contain path traversal segments: " + folder)
         return 1
     }
-if path_has_symlink_component(folder) {
-    print("ERROR: pack input must not contain symbolic links: " + folder)
-    return 1
-}
-if path_is_dir(folder) == false {
-    print("ERROR: pack input is not a folder: " + folder)
-    return 1
-}
-out_dir := flag(parsed, "out", "redact-pack")
-out_check := validate_directory_target(out_dir, "pack output directory")
-if out_check["ok"] == false {
-    print("ERROR: " + out_check["error"])
-    return 1
-}
-if path_exists(out_dir) {
-    print("ERROR: pack output directory already exists; choose a new path: " + out_dir)
-    return 1
-}
-if out_dir == folder {
-    print("ERROR: pack output directory must differ from the input folder")
-    return 1
-}
-files := list_dir(folder)
-files = sort(files)
-// Validate every eligible member before creating or populating the pack.
-// cmd_sanitize reloads each file so its normal checks still apply at use time.
-mut eligible := 0
-mut index := 0
-while index < len(files) {
-    name := files[index]
-    path := folder + "/" + name
-    if ends_with(to_lower(name), ".md")||ends_with(to_lower(name), ".txt") {
-        if path_has_symlink_component(path) {
-            print("ERROR: pack member must not contain symbolic links: " + path)
-            return 1
+    if path_has_symlink_component(folder) {
+        print("ERROR: pack input must not contain symbolic links: " + folder)
+        return 1
+    }
+    if path_is_dir(folder) == false {
+        print("ERROR: pack input is not a folder: " + folder)
+        return 1
+    }
+    out_dir := flag(parsed, "out", "redact-pack")
+    out_check := validate_directory_target(out_dir, "pack output directory")
+    if out_check["ok"] == false {
+        print("ERROR: " + out_check["error"])
+        return 1
+    }
+    if path_exists(out_dir) {
+        print("ERROR: pack output directory already exists; choose a new path: " + out_dir)
+        return 1
+    }
+    if out_dir == folder {
+        print("ERROR: pack output directory must differ from the input folder")
+        return 1
+    }
+    files := list_dir(folder)
+    files = sort(files)
+    // Validate every eligible member before creating or populating the pack.
+    // cmd_sanitize reloads each file so its normal checks still apply at use time.
+    mut eligible := 0
+    mut index := 0
+    while index < len(files) {
+        name := files[index]
+        path := folder + "/" + name
+        if ends_with(to_lower(name), ".md")||ends_with(to_lower(name), ".txt") {
+            if path_has_symlink_component(path) {
+                print("ERROR: pack member must not contain symbolic links: " + path)
+                return 1
+            }
+            if path_is_dir(path) {
+                index = index + 1
+                continue
+            }
+            checked := load_document(path)
+            if checked["ok"] == false {
+                print("ERROR: pack member " + name + ": " + checked["error"])
+                return 1
+            }
+            eligible = eligible + 1
         }
-    if path_is_dir(path) {
         index = index + 1
-        continue
     }
-checked := load_document(path)
-if checked["ok"] == false {
-    print("ERROR: pack member " + name + ": " + checked["error"])
-    return 1
-}
-eligible = eligible + 1
-}
-index = index + 1
-}
-if eligible == 0 {
-    print("ERROR: pack input contains no supported .txt or .md files")
-    return 1
-}
-ensure_dir(out_dir)
-mut processed := 0
-mut failed := 0
-mut i := 0
-while i < len(files) {
-    name := files[i]
-    path := folder + "/" + name
-    if path_is_dir(path) == false&&(ends_with(to_lower(name), ".md")||ends_with(to_lower(name), ".txt")) {
-        out_path := out_dir + "/" + name
-        local := {"flags": {"out": out_path}, "positionals": [path]}
-        code := cmd_sanitize(path, policy, audit_dir, local, unsafe, false)
-        if code == 0 {
-            processed = processed + 1
-        } else {
-        failed = failed + 1
+    if eligible == 0 {
+        print("ERROR: pack input contains no supported .txt or .md files")
+        return 1
     }
-}
-i = i + 1
-}
-print(to_json_pretty({
-    "schemaVersion": CLI_SCHEMA_VERSION,
-    "productVersion": PRODUCT_VERSION,
-    "command": "pack",
-    "input": folder,
-    "output": out_dir,
-    "processed": processed,
-    "failed": failed,
-    "unsafeOriginalsStored": unsafe
-}))
-if failed > 0 {
-    return 1
-}
-return 0
+    ensure_dir(out_dir)
+    mut processed := 0
+    mut failed := 0
+    mut i := 0
+    while i < len(files) {
+        name := files[i]
+        path := folder + "/" + name
+        if path_is_dir(path) == false&&(ends_with(to_lower(name), ".md")||ends_with(to_lower(name), ".txt")) {
+            out_path := out_dir + "/" + name
+            local := {"flags": {"out": out_path}, "positionals": [path]}
+            code := cmd_sanitize(path, policy, audit_dir, local, unsafe, false)
+            if code == 0 {
+                processed = processed + 1
+            } else {
+                failed = failed + 1
+            }
+        }
+        i = i + 1
+    }
+    print(to_json_pretty({
+        "schemaVersion": CLI_SCHEMA_VERSION,
+        "productVersion": PRODUCT_VERSION,
+        "command": "pack",
+        "input": folder,
+        "output": out_dir,
+        "processed": processed,
+        "failed": failed,
+        "unsafeOriginalsStored": unsafe
+    }))
+    if failed > 0 {
+        return 1
+    }
+    return 0
 }
 
 func parse_args(tokens) {
@@ -298,23 +298,23 @@ func parse_args(tokens) {
             if known_flag(key) == false {
                 return {"ok": false, "error": "unknown option: --" + key}
             }
-        if has_key(flags, key) == 1 {
-            return {"ok": false, "error": "duplicate option: --" + key}
+            if has_key(flags, key) == 1 {
+                return {"ok": false, "error": "duplicate option: --" + key}
+            }
+            if key == "unsafe-store-originals" {
+                flags[key] := true
+            } else if i + 1 < len(tokens)&&starts_with(tokens[i + 1], "--") == false {
+                flags[key] := tokens[i + 1]
+                i = i + 1
+            } else {
+                return {"ok": false, "error": "option requires a value: --" + key}
+            }
+        } else {
+            positionals = push(positionals, tok)
         }
-    if key == "unsafe-store-originals" {
-        flags[key] := true
-    } else if i + 1 < len(tokens)&&starts_with(tokens[i + 1], "--") == false {
-    flags[key] := tokens[i + 1]
-    i = i + 1
-} else {
-return {"ok": false, "error": "option requires a value: --" + key}
-}
-} else {
-positionals = push(positionals, tok)
-}
-i = i + 1
-}
-return {"ok": true, "positionals": positionals, "flags": flags}
+        i = i + 1
+    }
+    return {"ok": true, "positionals": positionals, "flags": flags}
 }
 
 func known_command(command) {
@@ -329,16 +329,16 @@ func command_allows_flag(command, key) {
     if key == "policy"||key == "audit-dir" {
         return true
     }
-if key == "unsafe-store-originals" {
-    return command == "scan"||command == "sanitize"||command == "pack"
-}
-if key == "out" {
-    return command == "sanitize"||command == "pack"
-}
-if key == "fail-on-risk" {
-    return command == "sanitize"
-}
-return false
+    if key == "unsafe-store-originals" {
+        return command == "scan"||command == "sanitize"||command == "pack"
+    }
+    if key == "out" {
+        return command == "sanitize"||command == "pack"
+    }
+    if key == "fail-on-risk" {
+        return command == "sanitize"
+    }
+    return false
 }
 
 func validate_command_args(command, parsed) {
@@ -350,15 +350,15 @@ func validate_command_args(command, parsed) {
             if key == "unsafe-store-originals" {
                 return {"ok": false, "error": "--unsafe-store-originals is only valid for scan, sanitize, and pack"}
             }
-        return {"ok": false, "error": "option --" + key + " is not valid for " + command}
+            return {"ok": false, "error": "option --" + key + " is not valid for " + command}
+        }
+        i = i + 1
     }
-i = i + 1
-}
-threshold := flag(parsed, "fail-on-risk", "")
-if threshold != ""&&threshold != "medium"&&threshold != "high" {
-    return {"ok": false, "error": "--fail-on-risk must be medium or high"}
-}
-return {"ok": true}
+    threshold := flag(parsed, "fail-on-risk", "")
+    if threshold != ""&&threshold != "medium"&&threshold != "high" {
+        return {"ok": false, "error": "--fail-on-risk must be medium or high"}
+    }
+    return {"ok": true}
 }
 
 func slice_from(arr, start) {
@@ -368,7 +368,7 @@ func slice_from(arr, start) {
         out = push(out, arr[i])
         i = i + 1
     }
-return out
+    return out
 }
 
 func flag(parsed, name, fallback) {
@@ -379,10 +379,10 @@ func default_output_path(input_path) {
     if ends_with(input_path, ".md") {
         return substring(input_path, 0, len(input_path) - 3) + ".redacted.md"
     }
-if ends_with(input_path, ".txt") {
-    return substring(input_path, 0, len(input_path) - 4) + ".redacted.txt"
-}
-return input_path + ".redacted"
+    if ends_with(input_path, ".txt") {
+        return substring(input_path, 0, len(input_path) - 4) + ".redacted.txt"
+    }
+    return input_path + ".redacted"
 }
 
 func category_counts(detections) {
@@ -393,18 +393,18 @@ func category_counts(detections) {
         if has_key(counts, cat) == 1 {
             counts[cat] := counts[cat] + 1
         } else {
-        counts[cat] := 1
+            counts[cat] := 1
+        }
+        i = i + 1
     }
-i = i + 1
-}
-return counts
+    return counts
 }
 
 func should_fail_for_risk(score, threshold) {
     if threshold == "" {
         return false
     }
-return risk_rank(score) >= risk_rank(threshold)
+    return risk_rank(score) >= risk_rank(threshold)
 }
 
 func risk_rank(score) {

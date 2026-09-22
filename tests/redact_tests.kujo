@@ -30,9 +30,9 @@ func category_count(detections, category) {
         if detections[i]["category"] == category {
             count = count + 1
         }
-    i = i + 1
-}
-return count
+        i = i + 1
+    }
+    return count
 }
 
 func detection_has_value(detections, value) {
@@ -41,9 +41,9 @@ func detection_has_value(detections, value) {
         if detections[i]["value"] == value {
             return true
         }
-    i = i + 1
-}
-return false
+        i = i + 1
+    }
+    return false
 }
 
 func all_transformations_applied(transformations) {
@@ -52,9 +52,9 @@ func all_transformations_applied(transformations) {
         if transformations[i]["occurrences"] < 1 {
             return false
         }
-    i = i + 1
-}
-return true
+        i = i + 1
+    }
+    return true
 }
 
 policy_res := load_policy("fixtures/sample.policy.yaml")
