@@ -109,6 +109,7 @@ jobs:
     env:
       WORKCELL_REF: 074d7262ef6c565e3dabd22ee046228c7329e5c1
       WORKCELL_KUJO_REF: 692512a9070fdba713f160d795bbddb8077db7b5
+      TMPDIR: ${{ runner.temp }}
     steps:
       - name: Checkout exact Redact candidate
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -148,10 +149,13 @@ jobs:
           set -euo pipefail
           "$RUNNER_TEMP/workcell-src/bin/workcell" doctor --backend docker --json |
             jq -e '.ok == true and .summary.blocked == 0'
-          "$RUNNER_TEMP/workcell-src/bin/workcell" run \
-            --file "$GITHUB_WORKSPACE/docs/workcell-launch-gate.json" \
-            --repo "$GITHUB_WORKSPACE" --output "$RUNNER_TEMP/redact-workcell-runs" \
-            --no-pull --summary > "$RUNNER_TEMP/redact-workcell-summary.json"
+          if ! "$RUNNER_TEMP/workcell-src/bin/workcell" run \
+              --file "$GITHUB_WORKSPACE/docs/workcell-launch-gate.json" \
+              --repo "$GITHUB_WORKSPACE" --output "$RUNNER_TEMP/redact-workcell-runs" \
+              --no-pull --summary > "$RUNNER_TEMP/redact-workcell-summary.json"; then
+            jq '{ok, stage, exit_code, error}' "$RUNNER_TEMP/redact-workcell-summary.json" >&2
+            exit 1
+          fi
           jq -e '.schema_version == "workcell-run-summary/v1" and .ok == true' \
             "$RUNNER_TEMP/redact-workcell-summary.json"
           run_dir="$(jq -r '.output_dir' "$RUNNER_TEMP/redact-workcell-summary.json")"
