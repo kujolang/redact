@@ -109,7 +109,6 @@ jobs:
     env:
       WORKCELL_REF: 074d7262ef6c565e3dabd22ee046228c7329e5c1
       WORKCELL_KUJO_REF: 692512a9070fdba713f160d795bbddb8077db7b5
-      TMPDIR: ${{ runner.temp }}
     steps:
       - name: Checkout exact Redact candidate
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -147,6 +146,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          export TMPDIR="$RUNNER_TEMP"
           "$RUNNER_TEMP/workcell-src/bin/workcell" doctor --backend docker --json |
             jq -e '.ok == true and .summary.blocked == 0'
           if ! "$RUNNER_TEMP/workcell-src/bin/workcell" run \
