@@ -5,6 +5,12 @@ versions are independent contracts.
 
 ## [Unreleased]
 
+- Reject quoted policy safety booleans and unquoted YAML mappings in term lists;
+  preserve literal quoted colon terms.
+- Correct regex detection source spans when an earlier embedded occurrence is
+  not a match, and protect active policy files from sanitize output writes.
+- Preserve uppercase `.MD`/`.TXT` extensions in default sanitized filenames
+  so the result can be verified as a supported document.
 - Apply the Unicode dictionary work budget across every configured category,
   not only the first nonempty one; test accepted scalar offsets and lowercase
   expansion at document boundaries.

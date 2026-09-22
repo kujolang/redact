@@ -82,7 +82,7 @@ allocating each replacement result and before verification. A transformation
 whose intermediate result exceeds that limit fails, even if a later rule
 could shrink it.
 
-Symbolic-link paths, traversal segments, source overwrites, oversized inputs or
+Symbolic-link paths, traversal segments, source or active-policy overwrites, oversized inputs or
 outputs, malformed UTF-8, unsupported extensions, and ambiguous policy YAML
 fail closed. Pack output must be a new directory.
 

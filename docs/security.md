@@ -17,7 +17,7 @@ is an uninvoked future interface description, not a detection capability.
 Inputs must be local, regular UTF-8 `.txt` or `.md` files no larger than
 1,048,576 bytes. Transformed output is limited to 2,097,152 bytes. Symbolic-link
 components, traversal segments, malformed UTF-8, unsupported extensions,
-source/output aliases, special output files, and unsafe audit or pack paths fail
+source/output or active-policy/output aliases, special output files, and unsafe audit or pack paths fail
 closed. Audit validation covers the derived run directory, including an existing
 `runs` component. On POSIX, symlink inspection uses the actual filename spelling,
 including literal backslashes. The system `/tmp` and `/var` aliases remain

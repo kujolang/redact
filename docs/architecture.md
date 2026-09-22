@@ -44,9 +44,10 @@ Transformations consume detections; they do not independently discover values.
 Repeated exact values use a stable replacement. Detection membership uses exact
 string keys; a shared stable merge ordering preserves original precedence for
 equal-length values. Literal search returns Unicode scalar offsets, matching
-the runtime substring contract. Configured matching materializes Unicode scalars
-once per document, then lowercases each candidate in its original context;
-whole-document lowercasing is not equivalent for Greek final sigma. Configured terms are evaluated
+the runtime substring contract. Configured Unicode matching materializes
+bounded, overlapping scalar windows, then lowercases each candidate in its
+original context; whole-document lowercasing is not equivalent for Greek final
+sigma. Configured terms are evaluated
 longest-first to prevent shorter configured terms from corrupting overlapping
 phrases. Pack inputs are sorted by filename and processed non-recursively.
 Supported members are validated before staging, then checked again during
