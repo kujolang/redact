@@ -15,7 +15,6 @@ export func detect_document(doc, policy) {
     // ASCII matching can use native literal search over one lowercased document.
     // Keep the candidate-based path for Unicode: contextual lowercase (notably
     // Greek final sigma) is not equivalent to lowercasing the whole document.
-    mut text_chars := []
     mut low_text := ""
     categories := ["person_names", "company_names", "customer_names", "product_names", "launch_strategy"]
     mut term_work := 0
@@ -43,15 +42,12 @@ export func detect_document(doc, policy) {
     }
     if has_terms {
         if byte_length(text) == len(text) {low_text = to_lower(text)}
-        if low_text == ""||unicode_term_work > 0 {
-            text_chars = regex_find_all(text, "(?s).")
-        }
     }
-    detections = append_terms(detections, text, text_chars, low_text, policy_terms(policy, "person_names"), "dictionary.person", "person_names", "role-preserve")
-    detections = append_terms(detections, text, text_chars, low_text, policy_terms(policy, "company_names"), "dictionary.company", "company_names", "placeholder")
-    detections = append_terms(detections, text, text_chars, low_text, policy_terms(policy, "customer_names"), "dictionary.customer", "customer_names", "placeholder")
-    detections = append_terms(detections, text, text_chars, low_text, policy_terms(policy, "product_names"), "dictionary.product", "product_names", "placeholder")
-    detections = append_terms(detections, text, text_chars, low_text, policy_terms(policy, "launch_strategy"), "dictionary.strategy", "launch_strategy", "generalize")
+    detections = append_terms(detections, text, low_text, policy_terms(policy, "person_names"), "dictionary.person", "person_names", "role-preserve")
+    detections = append_terms(detections, text, low_text, policy_terms(policy, "company_names"), "dictionary.company", "company_names", "placeholder")
+    detections = append_terms(detections, text, low_text, policy_terms(policy, "customer_names"), "dictionary.customer", "customer_names", "placeholder")
+    detections = append_terms(detections, text, low_text, policy_terms(policy, "product_names"), "dictionary.product", "product_names", "placeholder")
+    detections = append_terms(detections, text, low_text, policy_terms(policy, "launch_strategy"), "dictionary.strategy", "launch_strategy", "generalize")
     return {"ok": true, "detections": detections}
 }
 
@@ -73,7 +69,7 @@ func append_phones(detections, text) {
     return out
 }
 
-func append_terms(detections, text, text_chars, low_text, terms, detector_id, category, suggested_action) {
+func append_terms(detections, text, low_text, terms, detector_id, category, suggested_action) {
     mut out := detections
     mut seen := {}
     ordered_terms := longest_first(terms, "")
@@ -108,7 +104,7 @@ func append_terms(detections, text, text_chars, low_text, terms, detector_id, ca
             }
         }
         mut start_at := 0
-        mut found := find_term_from(text, text_chars, low_text, term, start_at)
+        mut found := find_term_from(text, low_text, term, start_at)
         while found["value"] != "" {
             value := found["value"]
             if has_key(seen, value) == 0 {
@@ -117,7 +113,7 @@ func append_terms(detections, text, text_chars, low_text, terms, detector_id, ca
                 seen[value] := true
             }
             start_at = found["start"] + len(value)
-            found = find_term_from(text, text_chars, low_text, term, start_at)
+            found = find_term_from(text, low_text, term, start_at)
         }
         i = i + 1
     }
@@ -128,7 +124,7 @@ export func regex_literal_ascii(value) {
     return regex_replace(value, "([.\\\\+*?\\[\\](){}^$|])", "\\$1")
 }
 
-func find_term_from(text, text_chars, low_text, term, start_at) {
+func find_term_from(text, low_text, term, start_at) {
     if low_text != ""&&byte_length(term) == len(term) {
         low_term := to_lower(term)
         start :=  - 1
@@ -143,24 +139,35 @@ func find_term_from(text, text_chars, low_text, term, start_at) {
     if low_text != "" {
         // Some Unicode terms lowercase to ASCII (for example Kelvin sign),
         // so an ASCII document still needs the contextual fallback here.
-        return find_case_variant_from(text_chars, term, start_at)
+        return find_case_variant_from(text, term, start_at)
     }
-    return find_case_variant_from(text_chars, term, start_at)
+    return find_case_variant_from(text, term, start_at)
 }
 
-func find_case_variant_from(text_chars, term, start_at) {
+func find_case_variant_from(text, term, start_at) {
     if term == "" {
         return {"value": "", "start": - 1}
     }
     low_term := to_lower(term)
     n := len(term)
-    mut i := start_at
-    while i < len(text_chars) {
-        candidate := join(slice(text_chars, i, i + n), "")
-        if to_lower(candidate) == low_term {
-            return {"value": candidate, "start": i}
+    // Bound the live character array to one window. Overlap by n-1 scalars
+    // so contextual lowercase at a window boundary sees the full candidate.
+    mut base := start_at
+    mut total := len(text)
+    while base < total {
+        count := 65536
+        if total - base < count {count = total - base}
+        window := substring(text, base, base + count + n - 1)
+        chars := regex_find_all(window, "(?s).")
+        mut i := 0
+        while i < count {
+            candidate := join(slice(chars, i, i + n), "")
+            if to_lower(candidate) == low_term {
+                return {"value": candidate, "start": base + i}
+            }
+            i = i + 1
         }
-        i = i + 1
+        base = base + count
     }
     return {"value": "", "start": - 1}
 }

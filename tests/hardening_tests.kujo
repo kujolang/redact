@@ -55,6 +55,9 @@ sigma := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: sigma\nterms:
 boundary := {"content": repeat("α", 4095) + "ΟΣ" + repeat("β", 4096)}
 boundary_hits := detect_document(boundary, sigma)["detections"]
 assert_true(len(boundary_hits) == 1&&boundary_hits[0]["span_start"] == 4095, "Unicode term retains its global scalar span")
+window_boundary := {"content": repeat("α", 65535) + "ΟΣ" + repeat("β", 65536)}
+window_hits := detect_document(window_boundary, sigma)["detections"]
+assert_true(len(window_hits) == 1&&window_hits[0]["span_start"] == 65535&&window_hits[0]["value"] == "ΟΣ", "contextual Unicode term spans a matcher window")
 expanded_term := parse_policy_yaml("schemaVersion: redact-policy/v1\nname: expansion\nterms:\n  person_names:\n    - i̇\n")["policy"]
 expanded_hits := detect_document({"content": "İ"}, expanded_term)["detections"]
 assert_true(len(expanded_hits) == 1&&expanded_hits[0]["span_end"] == 1, "contextual Unicode lowercase expansion remains matched at document end")
