@@ -1,0 +1,54 @@
+from src.detect import detect_document
+from src.policy import parse_policy_yaml
+
+func assert_true(condition, message) {
+    if condition == false {
+        print("FAIL: " + message)
+        exit(1)
+    }
+}
+
+base := "schemaVersion: redact-policy/v1\nname: synthetic-repro\n"
+assert_true(parse_policy_yaml(base + "ai_assist: \"false\"\n")["ok"] == false, "quoted boolean must not be coerced to a policy safety flag")
+assert_true(parse_policy_yaml(base + "preserve_task_structure: \"true\"\n")["ok"] == false, "quoted true must not be coerced to boolean")
+assert_true(parse_policy_yaml(base + "terms:\n  person_names:\n    - Customer: Internal\n")["ok"] == false, "unquoted mapping in a term list must fail closed")
+assert_true(parse_policy_yaml(base + "person_dictionary:\n  - Customer: Internal\n")["ok"] == false, "legacy list spelling must also reject YAML mappings")
+quoted_term := parse_policy_yaml(base + "terms:\n  person_names:\n    - \"Customer: Internal\"\n")
+assert_true(quoted_term["ok"]&&quoted_term["policy"]["terms"]["person_names"][0] == "Customer: Internal", "quoted colon remains a valid literal term")
+
+policy := parse_policy_yaml(base)["policy"]
+date_hits := detect_document({"content": "x2025-01-01 2025-01-01"}, policy)["detections"]
+mut date_start :=  - 1
+mut i := 0
+while i < len(date_hits) {
+    if date_hits[i]["detector_id"] == "det.date.iso" {date_start = date_hits[i]["span_start"]}
+    i = i + 1
+}
+assert_true(date_start == 12, "date detection span must point at the regex match, not earlier embedded text")
+unicode_hits := detect_document({"content": "🚀x2025-01-01 2025-01-01"}, policy)["detections"]
+mut unicode_date_start :=  - 1
+i = 0
+while i < len(unicode_hits) {
+    if unicode_hits[i]["detector_id"] == "det.date.iso" {unicode_date_start = unicode_hits[i]["span_start"]}
+    i = i + 1
+}
+assert_true(unicode_date_start == 13, "regex offsets count Unicode scalars rather than bytes")
+
+phone_hits := detect_document({"content": "x1234567890 1234567890"}, policy)["detections"]
+mut phone_start :=  - 1
+i = 0
+while i < len(phone_hits) {
+    if phone_hits[i]["detector_id"] == "det.phone"&&phone_hits[i]["value"] == "1234567890" {phone_start = phone_hits[i]["span_start"]}
+    i = i + 1
+}
+assert_true(phone_start == 12, "phone span must point at the actual match")
+
+card_hits := detect_document({"content": "x4111111111111111 4111111111111111"}, policy)["detections"]
+mut card_start :=  - 1
+i = 0
+while i < len(card_hits) {
+    if card_hits[i]["detector_id"] == "det.credit_card.luhn" {card_start = card_hits[i]["span_start"]}
+    i = i + 1
+}
+assert_true(card_start == 18, "card span must point at the actual Luhn-valid match")
+print("Policy shape, boolean, and detector span regressions passed")

@@ -5,6 +5,27 @@ versions are independent contracts.
 
 ## [Unreleased]
 
+- Reject quoted policy safety booleans and unquoted YAML mappings in term lists;
+  preserve literal quoted colon terms.
+- Correct regex detection source spans when an earlier embedded occurrence is
+  not a match, and protect active policy files from sanitize output writes.
+- Preserve uppercase `.MD`/`.TXT` extensions in default sanitized filenames
+  so the result can be verified as a supported document.
+- Apply the Unicode dictionary work budget across every configured category,
+  not only the first nonempty one; test accepted scalar offsets and lowercase
+  expansion at document boundaries.
+- Avoid quadratic whole-input copies for frequent ASCII dictionary terms;
+  add synthetic Unicode/repetition/aggregate-pack measurements on the hosted
+  install-smoke matrix while preserving output hashes.
+- Record pack publication intent before atomic publish and provide read-only
+  audit reconciliation for interruptions without touching published members.
+- Use bounded no-follow input reads and Kujo 1.4's constant-time byte length;
+  accelerate ASCII dictionary matching without changing Unicode behavior and
+  reject excessive configured-term / Unicode-candidate work.
+- Tighten ambiguous policy scalars and add malformed/Unicode parser matrices;
+  document structured-input compatibility design without enabling new types.
+- Stage packs privately and publish complete output with Kujo 1.4's atomic
+  no-replace directory operation; keep final output paths in successful audits.
 - Require the released Kujo 1.4.0 runtime across the version gate, Kennel
   minimum, CI, Workcell proof, and user documentation; adopt its formatter.
 - Validate supported pack members before output creation, reject empty packs,

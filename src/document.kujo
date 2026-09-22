@@ -1,4 +1,4 @@
-from src.util import content_hash, ext_of, path_has_symlink_component, path_has_traversal, read_text, utf8_size
+from src.util import content_hash, ext_of, path_has_symlink_component, path_has_traversal, read_text_bounded, utf8_size
 
 export MAX_INPUT_BYTES := 1048576
 export MAX_OUTPUT_BYTES := 2097152
@@ -19,7 +19,7 @@ export func load_document(path) {
     if file_exists(path)&&file_size(path) > MAX_INPUT_BYTES {
         return {"ok": false, "error": "input exceeds the 1048576-byte Redact 1.0 limit: " + path}
     }
-    loaded := read_text(path)
+    loaded := read_text_bounded(path, MAX_INPUT_BYTES)
     if loaded["ok"] == false {
         return loaded
     }

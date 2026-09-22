@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-KUJO_BIN="${KUJO_BIN:-/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/kujo}"
+KUJO_BIN="${KUJO_BIN:-kujo}"
 TEST_TMP="$(mktemp -d /tmp/redact-examples.XXXXXX)"
 
 cleanup() {
@@ -38,8 +38,35 @@ grep -Fq '[MID_FIVE_FIGURE_AMOUNT]' "$TEST_TMP/transformations.redacted.txt"
 
 "$KUJO_BIN" run redact.kujo pack examples/pack --policy examples/policy.yaml --out "$TEST_TMP/pack-a" --audit-dir "$TEST_TMP/pack-audit-a" > "$TEST_TMP/pack-a.json"
 "$KUJO_BIN" run redact.kujo pack examples/pack --policy examples/policy.yaml --out "$TEST_TMP/pack-b" --audit-dir "$TEST_TMP/pack-audit-b" > "$TEST_TMP/pack-b.json"
-jq -e '.command == "pack" and .processed == 2 and .failed == 0' "$TEST_TMP/pack-a.json" >/dev/null
+jq -e '.command == "pack" and .processed == 2 and .failed == 0 and .auditComplete == true and .auditFailed == 0' "$TEST_TMP/pack-a.json" >/dev/null
 diff -ru "$TEST_TMP/pack-a" "$TEST_TMP/pack-b"
+test -z "$(find "$TEST_TMP" -maxdepth 1 -name '.redact-pack-*' -print)"
+if grep -R -Fq '.redact-pack-' "$TEST_TMP/pack-audit-a"; then
+  echo 'successful pack audit retained a staging path' >&2
+  exit 1
+fi
+jq -e --arg prefix "$TEST_TMP/pack-a/" '.output_path | startswith($prefix)' \
+  "$TEST_TMP/pack-audit-a/runs/$(ls "$TEST_TMP/pack-audit-a/runs" | head -1)/output-manifest.json" >/dev/null
+python3 scripts/reconcile-pack-audits.py --audit-dir "$TEST_TMP/pack-audit-a" | \
+  jq -e '.counts.complete == 2 and .counts.recoverable_published == 0 and .counts.needs_review == 0' >/dev/null
+first_run="$(find "$TEST_TMP/pack-audit-a/runs" -mindepth 1 -maxdepth 1 -type d | sort | head -1)"
+first_output="$(jq -r .output_path "$first_run/pack-publication.json")"
+cp "$first_output" "$TEST_TMP/published-member-copy"
+mv "$first_run/output-manifest.json" "$TEST_TMP/interrupted-output-manifest.json"
+python3 scripts/reconcile-pack-audits.py --audit-dir "$TEST_TMP/pack-audit-a" | \
+  jq -e '.counts.complete == 1 and .counts.recoverable_published == 1 and .counts.needs_review == 0' >/dev/null
+cmp "$first_output" "$TEST_TMP/published-member-copy"
+mv "$TEST_TMP/interrupted-output-manifest.json" "$first_run/output-manifest.json"
+cp "$first_output" "$TEST_TMP/original-pack-member"
+cp fixtures/sample.md "$first_output"
+if python3 scripts/reconcile-pack-audits.py --audit-dir "$TEST_TMP/pack-audit-a" > "$TEST_TMP/reconcile-mismatch.json"; then
+  echo 'changed published member unexpectedly reconciled' >&2
+  exit 1
+fi
+jq -e '.counts.needs_review == 1' "$TEST_TMP/reconcile-mismatch.json" >/dev/null
+mv "$TEST_TMP/original-pack-member" "$first_output"
+python3 scripts/reconcile-pack-audits.py --audit-dir "$TEST_TMP/pack-audit-a" | \
+  jq -e '.counts.complete == 2' >/dev/null
 
 if "$KUJO_BIN" run redact.kujo scan examples/synthetic-note.md --policy examples/unsupported-nested-policy.yaml --audit-dir "$TEST_TMP/nested-audit" > "$TEST_TMP/nested.out" 2>&1; then
   echo "unsupported nested example unexpectedly succeeded" >&2

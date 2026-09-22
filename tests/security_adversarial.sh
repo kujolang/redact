@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-KUJO_BIN="${KUJO_BIN:-/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/kujo}"
+KUJO_BIN="${KUJO_BIN:-kujo}"
 TEST_TMP="$(mktemp -d /tmp/redact-security.XXXXXX)"
 
 cleanup() {
@@ -76,6 +76,56 @@ ln -s "$ROOT/fixtures/sample.md" "$TEST_TMP/pack-input/b.md"
 expect_failure "pack member must not contain symbolic links" pack-symlink \
   "$KUJO_BIN" run redact.kujo pack "$TEST_TMP/pack-input" --policy fixtures/sample.policy.yaml --out "$TEST_TMP/link-pack" --audit-dir "$TEST_TMP/link-audit"
 test ! -e "$TEST_TMP/link-pack"
+
+mkdir "$TEST_TMP/count-pack" "$TEST_TMP/bytes-pack"
+for member in $(seq -w 0 256); do
+  printf 'synthetic note\n' > "$TEST_TMP/count-pack/$member.txt"
+done
+expect_failure '256-file limit' pack-count \
+  "$KUJO_BIN" run redact.kujo pack "$TEST_TMP/count-pack" --policy basic \
+    --out "$TEST_TMP/count-output" --audit-dir "$TEST_TMP/count-audit"
+test ! -e "$TEST_TMP/count-output" && test ! -e "$TEST_TMP/count-audit"
+for member in $(seq -w 0 16); do
+  head -c 1048576 /dev/zero | tr '\0' 'x' > "$TEST_TMP/bytes-pack/$member.txt"
+done
+expect_failure '16777216-byte aggregate input limit' pack-bytes \
+  "$KUJO_BIN" run redact.kujo pack "$TEST_TMP/bytes-pack" --policy basic \
+    --out "$TEST_TMP/bytes-output" --audit-dir "$TEST_TMP/bytes-audit"
+test ! -e "$TEST_TMP/bytes-output" && test ! -e "$TEST_TMP/bytes-audit"
+
+# A later transformation failure must not expose the earlier completed member.
+printf '%s\n' 'schemaVersion: redact-policy/v1' 'name: late-failure' 'person_names: role-preserve' 'terms:' \
+  '  person_names:' '    - x' 'roles:' > "$TEST_TMP/late.policy.yaml"
+printf '  x: ' >> "$TEST_TMP/late.policy.yaml"
+head -c 8000 /dev/zero | tr '\0' 'A' >> "$TEST_TMP/late.policy.yaml"
+printf '\n' >> "$TEST_TMP/late.policy.yaml"
+mkdir "$TEST_TMP/late-input"
+printf '%s\n' 'ordinary synthetic note' > "$TEST_TMP/late-input/a.txt"
+head -c 300 /dev/zero | tr '\0' 'x' > "$TEST_TMP/late-input/z.txt"
+expect_failure 'no output directory was published' late-pack \
+  "$KUJO_BIN" run redact.kujo pack "$TEST_TMP/late-input" --policy "$TEST_TMP/late.policy.yaml" \
+    --out "$TEST_TMP/late-output" --audit-dir "$TEST_TMP/late-audit"
+test ! -e "$TEST_TMP/late-output"
+test -z "$(find "$TEST_TMP" -maxdepth 1 -name '.redact-pack-*' -print)"
+sed -n '/^{/,$p' "$TEST_TMP/late-pack.out" | \
+  jq -e '.published == false and .processed == 0 and .staged == 1 and .failed == 1' >/dev/null
+test -z "$(find "$TEST_TMP/late-audit" -name output-manifest.json -print)"
+
+mkdir "$TEST_TMP/collision-output"
+printf '%s\n' 'keep me' > "$TEST_TMP/collision-output/owner.txt"
+expect_failure 'already exists' pack-collision \
+  "$KUJO_BIN" run redact.kujo pack "$TEST_TMP/late-input" --policy fixtures/sample.policy.yaml \
+    --out "$TEST_TMP/collision-output" --audit-dir "$TEST_TMP/collision-audit"
+test "$(cat "$TEST_TMP/collision-output/owner.txt")" = 'keep me'
+test -z "$(find "$TEST_TMP" -maxdepth 1 -name '.redact-pack-*' -print)"
+
+mkdir "$TEST_TMP/locked-parent"
+chmod 500 "$TEST_TMP/locked-parent"
+expect_failure 'cannot create private pack staging directory' pack-permission \
+  "$KUJO_BIN" run redact.kujo pack examples/pack --policy fixtures/sample.policy.yaml \
+    --out "$TEST_TMP/locked-parent/pack" --audit-dir "$TEST_TMP/permission-audit"
+chmod 700 "$TEST_TMP/locked-parent"
+test ! -e "$TEST_TMP/locked-parent/pack"
 
 printf '\377' > "$TEST_TMP/invalid-utf8.md"
 expect_failure "file is not valid UTF-8 or cannot be read" invalid-utf8 \

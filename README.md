@@ -21,17 +21,24 @@ before sensitive production use.
 
 Redact requires the released Kujo 1.4.0 runtime at commit
 `266a8902068a14c3d17f803bef467dc28f1fe162`.
+Download the matching platform archive and checksum from the
+[Kujo v1.4.0 release](https://github.com/kujolang/kujo/releases/tag/v1.4.0),
+verify its SHA-256, and extract the `kujo` executable (`kujo.exe` on Windows).
 
 ```bash
 git clone https://github.com/kujolang/redact.git
 cd redact
-export KUJO_BIN=/path/to/kujo-1.4.0/target/release/kujo
+export KUJO_BIN=/absolute/path/to/extracted/kujo
 "$KUJO_BIN" --version
 "$KUJO_BIN" run redact.kujo version
 ```
 
 Expected versions are `kujo 1.4.0` and `redact 1.0.0`. Kennel consumers use
 `kennel.toml`; no registry publication is required for a source checkout.
+Windows users can set `$env:KUJO_BIN` to the extracted `kujo.exe` path.
+To learn the language behind this example, start with the
+[Kujo language documentation](https://docs.kujolang.ai/) and
+[runtime source](https://github.com/kujolang/kujo).
 
 ## Quick Start
 
@@ -75,7 +82,7 @@ allocating each replacement result and before verification. A transformation
 whose intermediate result exceeds that limit fails, even if a later rule
 could shrink it.
 
-Symbolic-link paths, traversal segments, source overwrites, oversized inputs or
+Symbolic-link paths, traversal segments, source or active-policy overwrites, oversized inputs or
 outputs, malformed UTF-8, unsupported extensions, and ambiguous policy YAML
 fail closed. Pack output must be a new directory.
 
@@ -95,9 +102,13 @@ mappings. The supported structure is shown in
 [`examples/policy.yaml`](examples/policy.yaml).
 
 Policy names must be non-empty strings, and category mappings require a colon.
+Ambiguous plain names (booleans, null-like words, and numbers) must be quoted.
 
 Policy files are limited to 262,144 bytes and must pass the same regular-file,
 traversal, and symbolic-link checks as inputs.
+At most 2,048 configured terms are accepted. Unicode candidate matching also
+uses a 2,000,000 scalar-candidate work budget; inputs/policies exceeding that
+combination fail with a resource-limit error, not a low-risk verification.
 
 Supported configured dictionaries are `person_names`, `company_names`,
 `customer_names`, `product_names`, and `launch_strategy`. Legacy top-level
@@ -107,7 +118,9 @@ policies should use `terms`.
 
 Nested objects beyond `terms` and `roles`, flow collections, anchors, aliases,
 tags, multiline scalars, tabs, duplicate top-level keys, and unknown fields are
-unsupported and fail with a line-specific policy error. `ai_assist` and
+unsupported and fail with a line-specific policy error. Inline comments and
+quoted escape sequences are unsupported; a `#` inside a quoted scalar is a
+literal value. `ai_assist` and
 `write_entity_map` must be `false` in 1.0.
 
 ## Detection Categories
@@ -143,11 +156,21 @@ not assurances that an unmatched value is safe.
 
 Repeated exact values reuse the same replacement. Folder entries are sorted
 before pack processing so output content and ordering are deterministic.
-Pack validates supported members before creating its output directory and
-rejects empty packs. A later I/O change or transformation failure may still
-leave a partial pack; a nonzero exit and `failed` count mean it must not be
-shared. Pack reads each eligible input again during processing to reapply the
-normal path, size, and UTF-8 checks. It is not an atomic directory transaction.
+Pack validates supported members, rejects empty packs, and caps a non-recursive
+pack at 256 supported files and 16 MiB of aggregate UTF-8 input (in addition
+to the 1 MiB per-file limit). Exceeding either cap fails before staging or
+audit creation. It builds output in
+a private directory beside the destination, then uses Kujo 1.4's atomic
+no-replace directory publication: the requested destination is either absent
+or contains the completed pack. Processing or publication failures do not
+publish a partial pack. An audit run may remain incomplete after failure;
+successful pack audits identify the published paths. Concurrent hostile
+filesystem modification is outside the supported boundary. Pack checks each
+eligible input again during processing to reapply normal safety checks.
+The pack summary includes `published`, `auditComplete`, and `auditFailed`.
+If audit finalization fails after publication, the command returns `1` while
+leaving the published pack intact; use the read-only reconciliation check
+described below before relying on the audit.
 
 ## CLI Reference
 
@@ -230,23 +253,46 @@ rejection. No example contains real personal or customer data or live secrets.
 ## Verification
 
 ```bash
-export KUJO_BIN=/path/to/kujo-1.4.0/target/release/kujo
+export KUJO_BIN=/absolute/path/to/extracted/kujo
 bash tests/run.sh
 bash scripts/verify-all.sh
 ```
 
+If the pinned `kujo` binary is already on `PATH`, `KUJO_BIN` may be omitted.
 A runtime version mismatch fails before the test workload starts. For repeatable
-synthetic performance measurements, run `python3 scripts/benchmark.py`; timings
+synthetic performance measurements, run `python3 scripts/benchmark.py`; the
+`--workload max-dictionary --samples 1` case checks a 1 MiB input against a
+near-256 KiB policy. `repeated-dictionary`, `unicode-dictionary`,
+`unicode-mixed`, `replacement-expansion`, `pack-batch`, and `pack-extended`
+exercise frequent terms, contextual Unicode across policy categories,
+bounded output expansion, and 1–2 MiB multi-file packs. Each reports time
+and process peak memory where the host provides it. Timings
 are observational, while output determinism and size contracts are CI gates.
+The [Kujo 1.4.0 synthetic comparison](docs/audits/performance-1.4.0.md)
+records the measured limits and the historical baseline's version difference.
 
 The full gate checks all Kujo sources, deterministic and adversarial tests,
 fixture commands, examples, product-version consistency, formatting, lint,
 local Markdown links, generated-artifact hygiene, Kennel validation, and
 ShipCheck. Release candidates additionally require the
 [Workcell proof and hosted CI receipt](docs/release-process.md).
+The hosted Verification workflow also install-smokes a clean committed source
+archive on Linux, macOS, and Windows against checksum-verified Kujo 1.4.0
+release binaries. Manual dispatches also require a separate AppArmor-backed
+Workcell proof for the exact candidate and retain its receipt as a seven-day
+workflow artifact. Locally, `python3 scripts/install-smoke.py` uses `KUJO_BIN`
+if set, or downloads and verifies the platform's official release asset.
+After a pack interruption, the read-only
+`python3 scripts/reconcile-pack-audits.py --audit-dir /path/to/audit` reports
+whether published members match the pending or completed audit hashes. It
+never repairs, removes, or certifies the output; retain both for review.
 
-The [next review backlog](docs/audits/next-review-2026-09-22.md) separates
-candidate enhancements from verified 1.0 behavior and release-only approvals.
+The [next review backlog](docs/audits/next-review-after-1.4.0.md) separates
+remaining candidate work from verified behavior and release-only approvals;
+the [prior review](docs/audits/next-review-2026-09-22.md) preserves the original proposals.
+The [structured-input contract](docs/formats-next-major.md) describes the
+requirements for potential CSV, JSON, recursive-pack and stdin additions;
+none is implemented in 1.x.
 
 ## Compatibility and Upgrades
 

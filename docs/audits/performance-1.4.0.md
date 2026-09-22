@@ -1,0 +1,58 @@
+# Synthetic Kujo 1.4.0 performance check
+
+Local macOS x64 measurements on the released Kujo 1.4.0 runtime, commit
+`266a8902068a14c3d17f803bef467dc28f1fe162`. These are observations,
+not service-level guarantees or a cross-platform benchmark. The existing
+[`performance.json`](performance.json) records a historical Kujo 1.0.0 run;
+its timings are not a like-for-like comparison with this runtime.
+
+| Synthetic workload | Previously committed code on 1.4.0 | Hardened candidate on 1.4.0 |
+| --- | --- | --- |
+| Small dictionary, three samples | 1.717 s median; 20.7 MB peak child RSS | 0.553 s median; 18.0 MB peak child RSS |
+| 1 MiB text, 253,125-byte policy, 1,050 absent terms | Exceeded 30-second timeout | 9.922 s; 35.9 MB peak child RSS |
+| 1 MiB text, 65,536 repeats of one ASCII term | 17.361 s; 492.7 MB peak child RSS | 1.398 s; 77.5 MB peak child RSS |
+| 1 MiB Unicode text, one absent Greek term | Not measured in the previous run | 14.348 s; 269.6 MB peak child RSS |
+| Sixteen 64 KiB synthetic files in a 1 MiB pack | Not measured in the previous run | 5.320 s; 19.4 MB peak child RSS |
+
+Additional single-sample local macOS x64 probes on candidate `777495c` and
+the same pinned runtime (each probe uses a separate process):
+
+| Accepted synthetic workload | Elapsed | Peak child RSS | Output |
+| --- | --- | --- | --- |
+| 524,288-byte Greek text, absent Unicode terms in two policy categories | 13.506 s | 138.7 MB | 524,288 bytes |
+| 280,000-byte repeated single-letter term expanded by replacement | 2.967 s | 145.4 MB | 1,540,000 bytes |
+| Thirty-two 64 KiB files in a 2 MiB pack | 12.795 s | 20.0 MB | 2,097,152 bytes |
+
+These are deterministic synthetic probes, not confidence intervals, maximum
+memory budgets, or actual-deployment measurements. The hosted matrix runs
+them on Linux, macOS and Windows as install-smoke evidence; do not compare
+Windows peak working set directly to POSIX peak RSS.
+
+For the small and repeated dictionaries, the before and after SHA-256 of output matched.
+The upper-bound fixture contains only synthetic, absent ASCII terms; it is
+not representative of all dictionaries. The previous implementation timed
+out before producing a comparable output hash or peak-memory sample. Peak
+RSS is the operating system's cumulative child-process high-water mark, not
+an allocation profile. Run `KUJO_BIN=/path/to/kujo python3
+scripts/benchmark.py --workload max-dictionary --samples 1 --timeout 30` to
+repeat the new case. For contextual Unicode term matching, a 2,000,000
+scalar-candidate admission budget returns an error for larger combinations;
+this is not a total wall-clock or memory bound for every valid input.
+
+Neither a low verifier score nor these timings establish complete detection,
+enterprise readiness, or fitness for an unreviewed data domain.
+The repeated-term result uses native, literal ASCII matching to avoid copying
+the entire input for each occurrence. Unicode matching deliberately retains
+context-sensitive candidate evaluation. The earlier 269.6 MB peak for a
+1 MiB document was meaningful, but the new bounded 65,536-scalar matcher
+windows reduced a single local synthetic probe to 67,444,736 bytes (about
+64.3 MiB) and 12.816 s. For the two-category 512 KiB probe the new single
+sample measured 61,452,288 bytes (about 58.6 MiB) and 12.855 s, compared to
+the earlier 138.7 MB and 13.506 s. Both new outputs retain the same input
+bytes and Unicode span tests now cover the window boundary. These are
+single-sample observations, not memory ceilings, speedup guarantees, or
+cross-platform comparisons. The hosted install-smoke matrix logs seven boundary workloads
+on supported platforms without treating timings as universal thresholds.
+On Windows the runner samples the child process's OS-maintained
+[peak working set](https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters)
+instead of POSIX `ru_maxrss`; `peak_memory_basis` distinguishes these metrics.

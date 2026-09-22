@@ -67,6 +67,34 @@ export func read_text(path) {
     return {"ok": true, "text": loaded}
 }
 
+// Kujo 1.4 holds the parent directory and opens the final regular file
+// without following symlinks; the byte limit applies to the same handle.
+export func read_text_bounded(path, max_bytes) {
+    native_path := normalize_cli_path(path)
+    root := parent_of(native_path)
+    if root == "" {root = "."}
+    mut loaded := ""
+    try {
+        loaded = read_file_beneath(root, base_of(native_path), max_bytes)
+    } except err {
+        return {"ok": false, "error": "file is not valid UTF-8 or cannot be read: " + path}
+    }
+    if type(loaded) != "string" {
+        return {"ok": false, "error": "file is not valid UTF-8 or cannot be read: " + path}
+    }
+    return {"ok": true, "text": loaded}
+}
+
+// Windows APIs and shells can return backslash-separated paths. Internally
+// keep one separator so parent/basename and containment checks agree.
+export func normalize_cli_path(path) {
+    cwd := os_getcwd()
+    if len(cwd) > 1&&substring(cwd, 1, 2) == ":" {
+        return replace(path, "\\", "/")
+    }
+    return path
+}
+
 export func path_has_traversal(path) {
     if type(path) != "string" {
         return true
@@ -87,9 +115,13 @@ export func path_has_symlink_component(path) {
     if type(path) != "string"||path == "" {
         return false
     }
-    mut absolute := path
-    if starts_with(absolute, "/") == false {
-        absolute = os_getcwd() + "/" + absolute
+    mut absolute := normalize_cli_path(path)
+    mut drive_absolute := false
+    if len(absolute) > 2&&substring(absolute, 1, 3) == ":/" {
+        drive_absolute = true
+    }
+    if starts_with(absolute, "/") == false&&drive_absolute == false {
+        absolute = normalize_cli_path(os_getcwd()) + "/" + absolute
     }
     parts := split(absolute, "/")
     mut current := ""
@@ -261,15 +293,10 @@ export func unique_push(arr, value) {
     return push(arr, value)
 }
 
-// Kujo 1.0 len(string) counts Unicode scalars. Base64 exposes exact UTF-8
-// byte size without a filesystem round trip; the temporary encoding is bounded
-// by the input being measured and is not retained.
+// Kujo 1.4 supplies a constant-time UTF-8 byte count with no temporary
+// encoding allocation. len(string) continues to count Unicode scalars.
 export func utf8_size(text) {
-    encoded := encode_base64(text)
-    size := len(encoded) / 4 * 3
-    if ends_with(encoded, "==") {return size - 2}
-    if ends_with(encoded, "=") {return size - 1}
-    return size
+    return byte_length(text)
 }
 
 // Stable merge ordering preserves detector/category precedence on equal lengths.

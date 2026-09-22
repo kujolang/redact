@@ -146,6 +146,21 @@ export func audit_output(run_dir, out_path, content) {
     }), true)
 }
 
+// Pack publication and the audit tree cannot share a filesystem transaction.
+// Keep an intent with the final-path hash before publication so an interrupted
+// audit can be distinguished from a missing or changed published member.
+export func audit_pack_publication(run_dir, out_path, content, status) {
+    output_hash := content_hash(content)
+    write_file_atomic(run_dir + "/pack-publication.json", to_json_pretty({
+        "schemaVersion": "redact-pack-publication/v1",
+        "status": status,
+        "output_path": out_path,
+        "content_hash": output_hash,
+        "length": len(content)
+    }), true)
+    return output_hash
+}
+
 export func audit_warnings(run_dir, warnings) {
     mut i := 0
     while i < len(warnings) {

@@ -8,7 +8,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parent.parent
-KUJO = os.environ.get("KUJO_BIN", str(ROOT.parent / "kujo/target/release/kujo"))
+KUJO = os.environ.get("KUJO_BIN", "kujo")
 
 
 def run(*args):
@@ -75,6 +75,17 @@ with tempfile.TemporaryDirectory(prefix="redact-hardening-") as tmp:
                  "--audit-dir", base / "expansion-audit")
     assert result.returncode == 1 and "2097152-byte" in result.stdout, result.stdout
     assert preserved.read_text() == "previous output", "failed expansion replaced output"
+
+    hardlink_source = base / "hardlink-source.md"
+    hardlink_source.write_text("synthetic@example.org\n", encoding="utf-8")
+    hardlink_output = base / "hardlink-output.md"
+    os.link(hardlink_source, hardlink_output)
+    result = run("sanitize", hardlink_source, "--policy", "basic", "--out", hardlink_output,
+                 "--audit-dir", base / "hardlink-audit")
+    assert result.returncode == 0, result.stdout
+    assert hardlink_source.read_text() == "synthetic@example.org\n", "source inode was changed"
+    assert "synthetic@example.org" not in hardlink_output.read_text(), "output was not sanitized"
+    assert hardlink_source.stat().st_ino != hardlink_output.stat().st_ino, "hardlink alias survived overwrite"
 
     def scan_once(_):
         result = run("scan", source, "--audit-dir", base / "concurrent-audit")

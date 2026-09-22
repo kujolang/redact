@@ -17,11 +17,38 @@ is an uninvoked future interface description, not a detection capability.
 Inputs must be local, regular UTF-8 `.txt` or `.md` files no larger than
 1,048,576 bytes. Transformed output is limited to 2,097,152 bytes. Symbolic-link
 components, traversal segments, malformed UTF-8, unsupported extensions,
-source/output aliases, special output files, and unsafe audit or pack paths fail
+source/output or active-policy/output aliases, special output files, and unsafe audit or pack paths fail
 closed. Audit validation covers the derived run directory, including an existing
 `runs` component. On POSIX, symlink inspection uses the actual filename spelling,
 including literal backslashes. The system `/tmp` and `/var` aliases remain
 accepted as before.
+Input and policy text are read through Kujo 1.4's bounded handle-relative
+`read_file_beneath`, which holds the parent directory, rejects final symlinks
+and nonregular files, and applies the byte limit to that open handle. The
+preceding path checks still reject explicit symlink components. Replacing a
+path's parent before the held directory is opened, mutation of file contents
+by another process, and concurrent changes to output/audit parents remain
+outside this local-tool boundary. A synthetic hard-link output regression
+verifies atomic replacement does not modify the source inode; Redact does not
+attempt to prohibit hard-linked source files or guarantee inode isolation
+against a hostile same-host actor.
+
+Pack uses Kujo 1.4's private sibling staging directory and atomic no-replace
+directory publication on macOS, Linux, and Windows. A processing or publish
+failure cannot expose a partly written requested pack directory. A partial
+audit may still remain, and writes after publication are not a joint atomic
+transaction with the pack. Each member's audit records a pending final-path
+hash before publication and switches to published only after output manifests
+are written. If audit finalization fails, pack JSON reports `published: true`,
+`auditComplete: false`, and a nonzero exit; do not discard the published output
+or assume an incomplete audit is complete. The read-only
+`python3 scripts/reconcile-pack-audits.py --audit-dir PATH` checks member hashes
+and reports `matching_pending`, `recoverable_published`, `not_published`, or
+`needs_review` without changing either output or audit. Matching a pending
+hash cannot prove Redact published the directory: a pre-existing collision
+might have identical bytes. An audit and pack still have no joint
+transaction. Hostile writers on the same host are not an established security
+boundary.
 
 The output limit counts UTF-8 bytes, not Unicode scalars. Each projected
 replacement is checked before allocation, and output is checked before the
@@ -41,10 +68,14 @@ feature, regardless of the pinned runtime version.
 
 `redact-policy/v1` accepts top-level scalars, the documented `terms` lists, and
 the documented `roles` scalar mapping. Unknown fields, arbitrary nesting,
-flow-style objects/arrays, anchors, aliases, tags, multiline scalars, tabs,
+flow-style objects/arrays, anchors, aliases, tags, inline comments, quoted
+escape sequences, multiline scalars, tabs,
 duplicate top-level keys, and unsupported actions fail with a policy error.
 Policy files are limited to 262,144 bytes and must be regular, non-symlinked,
-traversal-free paths.
+traversal-free paths. At most 2,048 configured terms are accepted. When
+context-sensitive Unicode matching is needed, Redact rejects document/term
+combinations requiring more than 2,000,000 scalar-candidate work units. These
+are conservative deterministic admission limits, not a wall-clock guarantee.
 
 Policy dictionaries are security-critical configuration. False negatives can
 result from missing terms, confusables, unsupported formats, misspellings, or
@@ -86,7 +117,7 @@ zero residual privacy risk.
 ## Threats not solved
 
 Redact does not defend against compromised hosts, malicious local users, unsafe
-permissions, filesystem races outside the checked boundary, hard-link aliases,
+permissions, filesystem races outside the checked boundary, mutable hard-linked inputs,
 unrecognized encodings, inference from retained context, screenshots, copied
 audit artifacts, policy tampering, or a human distributing unreviewed output.
 
