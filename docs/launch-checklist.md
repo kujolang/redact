@@ -29,7 +29,7 @@ does not certify complete redaction, compliance, or arbitrary-domain fitness.
 ## Exact candidate gates
 
 - [ ] `bash scripts/verify-all.sh` passes on the final commit.
-- [ ] Required fixture commands pass with released Kujo 1.0.0.
+- [ ] Required fixture commands pass with released Kujo 1.4.0.
 - [ ] Markdown link audit reports zero broken local links.
 - [ ] Kennel validation passes.
 - [ ] ShipCheck gate exits `0` with no release-blocking finding.

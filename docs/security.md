@@ -31,11 +31,11 @@ for every accepted dictionary/document combination.
 
 ## Stdin boundary
 
-Redact 1.0 rejects `-`. Released Kujo 1.0.0 provides only line-oriented
-`input()` and does not distinguish EOF from a read failure or enforce a bounded
-multiline read. A loop over that primitive would risk truncation, ambiguity, or
-unbounded behavior. Use a controlled local file. Stdin remains a post-1.0
-non-goal until the runtime offers a safe primitive.
+Redact 1.0 rejects `-`. It has no implemented or tested bounded multiline
+stdin path with explicit EOF, read-error, and size-limit behavior. A naive
+line-oriented loop would risk truncation, ambiguity, or unbounded behavior.
+Use a controlled local file; stdin remains a separately reviewed future
+feature, regardless of the pinned runtime version.
 
 ## Policy boundary
 

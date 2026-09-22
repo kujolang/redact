@@ -1,6 +1,6 @@
 # Redact Architecture
 
-Redact is a Kujo 1.0 command-line package with a root entrypoint, source modules,
+Redact is a Kujo 1.4.0 command-line package with a root entrypoint, source modules,
 synthetic fixtures/examples, deterministic tests, and local-only artifacts.
 
 ## Pipeline

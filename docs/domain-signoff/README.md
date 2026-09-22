@@ -17,7 +17,7 @@ rules.
 Reproduce the synthetic evidence with:
 
 ```bash
-export KUJO_BIN=/path/to/kujo-1.0.0/target/release/kujo
+export KUJO_BIN=/path/to/kujo-1.4.0/target/release/kujo
 bash tests/run.sh
 bash tests/examples_smoke.sh
 ```

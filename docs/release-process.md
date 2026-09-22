@@ -5,15 +5,15 @@
 An authorized human identifies the exact candidate SHA, confirms the working
 tree is clean, reviews the [launch checklist](launch-checklist.md), and signs
 the target-domain [privacy/security checklist](domain-signoff/checklist.md).
-Use Kujo v1.0.0 commit
-`2b3e07d398016e92008d8399e79c441e012dce38`.
+Use Kujo v1.4.0 commit
+`266a8902068a14c3d17f803bef467dc28f1fe162`.
 
 ```bash
 git switch codex/redact-v1-release-prep
 git pull --ff-only
 export KUJO_BIN=/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/release/kujo
-test "$("$KUJO_BIN" --version)" = "kujo 1.0.0"
-test "$(git -C ../kujo rev-parse v1.0.0^{commit})" = "$(cat RUNTIME_VERSION)"
+test "$("$KUJO_BIN" --version)" = "kujo 1.4.0"
+test "$(git -C ../kujo rev-parse v1.4.0^{commit})" = "$(cat RUNTIME_VERSION)"
 bash scripts/verify-all.sh
 git status --short
 git rev-parse HEAD

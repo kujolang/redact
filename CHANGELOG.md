@@ -5,6 +5,8 @@ versions are independent contracts.
 
 ## [Unreleased]
 
+- Require the released Kujo 1.4.0 runtime across the version gate, Kennel
+  minimum, CI, Workcell proof, and user documentation; adopt its formatter.
 - Validate supported pack members before output creation, reject empty packs,
   and test invalid-member handling without partial output.
 - Validate derived audit paths and literal POSIX filenames, reject special

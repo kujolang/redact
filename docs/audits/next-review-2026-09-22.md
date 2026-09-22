@@ -43,7 +43,8 @@ real data domain on behalf of its privacy/security owners.
    `src/detect.kujo` scans Unicode scalar candidates for each configured term,
    and `src/transform.kujo` replaces whole-document occurrences per distinct
    value. Input and policy byte caps do not establish a CPU cap. Benchmark
-   adversarial valid 1 MiB documents and 256 KiB policies under Kujo 1.0.0;
+   adversarial valid 1 MiB documents and 256 KiB policies under the pinned
+   Kujo runtime;
    preserve contextual Unicode matching and deterministic output when
    optimizing. Measure end-to-end time and peak memory against the existing
    [performance baseline](performance.json).

@@ -19,18 +19,18 @@ before sensitive production use.
 
 ## Install
 
-Redact requires the released Kujo 1.0.0 runtime at commit
-`2b3e07d398016e92008d8399e79c441e012dce38`.
+Redact requires the released Kujo 1.4.0 runtime at commit
+`266a8902068a14c3d17f803bef467dc28f1fe162`.
 
 ```bash
 git clone https://github.com/kujolang/redact.git
 cd redact
-export KUJO_BIN=/path/to/kujo-1.0.0/target/release/kujo
+export KUJO_BIN=/path/to/kujo-1.4.0/target/release/kujo
 "$KUJO_BIN" --version
 "$KUJO_BIN" run redact.kujo version
 ```
 
-Expected versions are `kujo 1.0.0` and `redact 1.0.0`. Kennel consumers use
+Expected versions are `kujo 1.4.0` and `redact 1.0.0`. Kennel consumers use
 `kennel.toml`; no registry publication is required for a source checkout.
 
 ## Quick Start
@@ -59,7 +59,7 @@ Review the sanitized file and its audit run before sharing either one.
 Redact 1.0 is stable for:
 
 - local regular `.txt` and `.md` files up to 1,048,576 bytes;
-- UTF-8 text accepted by Kujo 1.0.0;
+- UTF-8 text accepted by Kujo 1.4.0;
 - `redact-policy/v1`, the documented flat-YAML policy subset;
 - deterministic categories and configured term dictionaries;
 - `remove`, `placeholder`, `role-preserve`, `generalize`, `range`, and
@@ -82,11 +82,10 @@ fail closed. Pack output must be a new directory.
 ### Supported inputs and stdin decision
 
 Only local `.txt` and `.md` file paths are supported. `-` stdin is explicitly
-not supported in Redact 1.0.0. Kujo 1.0.0 exposes only a line-oriented
-`input()` primitive; EOF and read errors are not distinguishable and there is
-no bounded multiline read. Redact therefore rejects `-` rather than advertise
-an unsafe or incomplete contract. Bounded multiline stdin is a post-1.0
-enhancement contingent on a suitable runtime API.
+not supported in Redact 1.0.0. Redact has no implemented, tested bounded
+multiline stdin contract; it rejects `-` rather than risk truncation or
+ambiguous EOF/read failures. Stdin remains a separate future feature that
+requires a suitable runtime API and explicit tests.
 
 ## Policy Contract
 
@@ -231,7 +230,7 @@ rejection. No example contains real personal or customer data or live secrets.
 ## Verification
 
 ```bash
-export KUJO_BIN=/path/to/kujo-1.0.0/target/release/kujo
+export KUJO_BIN=/path/to/kujo-1.4.0/target/release/kujo
 bash tests/run.sh
 bash scripts/verify-all.sh
 ```
@@ -251,8 +250,9 @@ candidate enhancements from verified 1.0 behavior and release-only approvals.
 
 ## Compatibility and Upgrades
 
-Redact 1.x requires Kujo 1.0.0 or newer behavior compatible with the pinned
-runtime commit in `RUNTIME_VERSION`. The CLI command names, documented exit
+Redact 1.x currently requires Kujo 1.4.0 at the pinned release commit in
+`RUNTIME_VERSION`. The version gate rejects other runtimes until they have
+been deliberately validated. The CLI command names, documented exit
 codes, `redact-policy/v1`, audit schemas, and JSON schema majors are stable
 within 1.x. Additive fields may appear. Breaking contract changes require a
 new schema major and release notes; product versions do not silently replace
