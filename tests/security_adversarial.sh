@@ -77,6 +77,22 @@ expect_failure "pack member must not contain symbolic links" pack-symlink \
   "$KUJO_BIN" run redact.kujo pack "$TEST_TMP/pack-input" --policy fixtures/sample.policy.yaml --out "$TEST_TMP/link-pack" --audit-dir "$TEST_TMP/link-audit"
 test ! -e "$TEST_TMP/link-pack"
 
+mkdir "$TEST_TMP/count-pack" "$TEST_TMP/bytes-pack"
+for member in $(seq -w 0 256); do
+  printf 'synthetic note\n' > "$TEST_TMP/count-pack/$member.txt"
+done
+expect_failure '256-file limit' pack-count \
+  "$KUJO_BIN" run redact.kujo pack "$TEST_TMP/count-pack" --policy basic \
+    --out "$TEST_TMP/count-output" --audit-dir "$TEST_TMP/count-audit"
+test ! -e "$TEST_TMP/count-output" && test ! -e "$TEST_TMP/count-audit"
+for member in $(seq -w 0 16); do
+  head -c 1048576 /dev/zero | tr '\0' 'x' > "$TEST_TMP/bytes-pack/$member.txt"
+done
+expect_failure '16777216-byte aggregate input limit' pack-bytes \
+  "$KUJO_BIN" run redact.kujo pack "$TEST_TMP/bytes-pack" --policy basic \
+    --out "$TEST_TMP/bytes-output" --audit-dir "$TEST_TMP/bytes-audit"
+test ! -e "$TEST_TMP/bytes-output" && test ! -e "$TEST_TMP/bytes-audit"
+
 # A later transformation failure must not expose the earlier completed member.
 printf '%s\n' 'schemaVersion: redact-policy/v1' 'name: late-failure' 'person_names: role-preserve' 'terms:' \
   '  person_names:' '    - x' 'roles:' > "$TEST_TMP/late.policy.yaml"

@@ -7,6 +7,10 @@ from src.util import content_hash, ensure_dir, get_or, normalize_cli_path, paren
 from src.verify import verify_document
 from src.version import CLI_SCHEMA_VERSION, PRODUCT_VERSION
 
+// Keep aggregate pack work bounded as well as each individual document.
+export MAX_PACK_FILES := 256
+export MAX_PACK_INPUT_BYTES := 16777216
+
 export func main(argv) {
     if len(argv) == 0 {
         print_help()
@@ -247,6 +251,7 @@ func cmd_pack(folder, policy, audit_dir, parsed, unsafe) {
     // Validate every eligible member before creating or populating the pack.
     // cmd_sanitize reloads each file so its normal checks still apply at use time.
     mut eligible := 0
+    mut input_bytes := 0
     mut index := 0
     while index < len(files) {
         name := files[index]
@@ -266,6 +271,15 @@ func cmd_pack(folder, policy, audit_dir, parsed, unsafe) {
                 return 1
             }
             eligible = eligible + 1
+            if eligible > MAX_PACK_FILES {
+                print("ERROR: pack exceeds the 256-file limit")
+                return 1
+            }
+            input_bytes = input_bytes + byte_length(checked["document"]["content"])
+            if input_bytes > MAX_PACK_INPUT_BYTES {
+                print("ERROR: pack exceeds the 16777216-byte aggregate input limit")
+                return 1
+            }
         }
         index = index + 1
     }
