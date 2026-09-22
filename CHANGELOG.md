@@ -5,6 +5,13 @@ versions are independent contracts.
 
 ## [Unreleased]
 
+- Use bounded no-follow input reads and Kujo 1.4's constant-time byte length;
+  accelerate ASCII dictionary matching without changing Unicode behavior and
+  reject excessive configured-term / Unicode-candidate work.
+- Tighten ambiguous policy scalars and add malformed/Unicode parser matrices;
+  document structured-input compatibility design without enabling new types.
+- Stage packs privately and publish complete output with Kujo 1.4's atomic
+  no-replace directory operation; keep final output paths in successful audits.
 - Require the released Kujo 1.4.0 runtime across the version gate, Kennel
   minimum, CI, Workcell proof, and user documentation; adopt its formatter.
 - Validate supported pack members before output creation, reject empty packs,
