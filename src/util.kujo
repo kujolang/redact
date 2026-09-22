@@ -70,11 +70,12 @@ export func read_text(path) {
 // Kujo 1.4 holds the parent directory and opens the final regular file
 // without following symlinks; the byte limit applies to the same handle.
 export func read_text_bounded(path, max_bytes) {
-    root := parent_of(path)
+    native_path := normalize_cli_path(path)
+    root := parent_of(native_path)
     if root == "" {root = "."}
     mut loaded := ""
     try {
-        loaded = read_file_beneath(root, base_of(path), max_bytes)
+        loaded = read_file_beneath(root, base_of(native_path), max_bytes)
     } except err {
         return {"ok": false, "error": "file is not valid UTF-8 or cannot be read: " + path}
     }
@@ -82,6 +83,16 @@ export func read_text_bounded(path, max_bytes) {
         return {"ok": false, "error": "file is not valid UTF-8 or cannot be read: " + path}
     }
     return {"ok": true, "text": loaded}
+}
+
+// Windows APIs and shells can return backslash-separated paths. Internally
+// keep one separator so parent/basename and containment checks agree.
+export func normalize_cli_path(path) {
+    cwd := os_getcwd()
+    if len(cwd) > 1&&substring(cwd, 1, 2) == ":" {
+        return replace(path, "\\", "/")
+    }
+    return path
 }
 
 export func path_has_traversal(path) {
@@ -104,9 +115,13 @@ export func path_has_symlink_component(path) {
     if type(path) != "string"||path == "" {
         return false
     }
-    mut absolute := path
-    if starts_with(absolute, "/") == false {
-        absolute = os_getcwd() + "/" + absolute
+    mut absolute := normalize_cli_path(path)
+    mut drive_absolute := false
+    if len(absolute) > 2&&substring(absolute, 1, 3) == ":/" {
+        drive_absolute = true
+    }
+    if starts_with(absolute, "/") == false&&drive_absolute == false {
+        absolute = normalize_cli_path(os_getcwd()) + "/" + absolute
     }
     parts := split(absolute, "/")
     mut current := ""

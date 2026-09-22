@@ -3,7 +3,7 @@ from src.detect import detect_document
 from src.document import MAX_OUTPUT_BYTES, load_document, validate_output_content, validate_output_path
 from src.policy import load_policy
 from src.transform import transform_document
-from src.util import ensure_dir, get_or, parent_of, path_has_symlink_component, path_has_traversal, truthy, validate_directory_target
+from src.util import ensure_dir, get_or, normalize_cli_path, parent_of, path_has_symlink_component, path_has_traversal, truthy, validate_directory_target
 from src.verify import verify_document
 from src.version import CLI_SCHEMA_VERSION, PRODUCT_VERSION
 
@@ -44,15 +44,15 @@ export func main(argv) {
         print("ERROR: " + args_check["error"])
         return 2
     }
-    input_path := pos[0]
-    policy_ref := flag(parsed, "policy", "basic")
+    input_path := normalize_cli_path(pos[0])
+    policy_ref := normalize_cli_path(flag(parsed, "policy", "basic"))
     loaded_policy := load_policy(policy_ref)
     if loaded_policy["ok"] == false {
         print("ERROR: " + loaded_policy["error"])
         return 1
     }
     policy := loaded_policy["policy"]
-    audit_dir := flag(parsed, "audit-dir", ".redact")
+    audit_dir := normalize_cli_path(flag(parsed, "audit-dir", ".redact"))
     audit_path_check := validate_directory_target(audit_dir, "audit directory")
     if audit_path_check["ok"] == false {
         print("ERROR: " + audit_path_check["error"])
@@ -120,7 +120,7 @@ func cmd_sanitize(input_path, policy, audit_dir, parsed, unsafe, emit_output) {
         return 1
     }
     doc := doc_res["document"]
-    out_path := flag(parsed, "out", default_output_path(input_path))
+    out_path := normalize_cli_path(flag(parsed, "out", default_output_path(input_path)))
     output_check := validate_output_path(input_path, out_path)
     if output_check["ok"] == false {
         print("ERROR: " + output_check["error"])
@@ -228,7 +228,7 @@ func cmd_pack(folder, policy, audit_dir, parsed, unsafe) {
         print("ERROR: pack input is not a folder: " + folder)
         return 1
     }
-    out_dir := flag(parsed, "out", "redact-pack")
+    out_dir := normalize_cli_path(flag(parsed, "out", "redact-pack"))
     out_check := validate_directory_target(out_dir, "pack output directory")
     if out_check["ok"] == false {
         print("ERROR: " + out_check["error"])
