@@ -147,7 +147,7 @@ jobs:
         run: |
           set -euo pipefail
           "$RUNNER_TEMP/workcell-src/bin/workcell" doctor --backend docker --json |
-            jq -e '.ok == true and .blocked == 0'
+            jq -e '.ok == true and .summary.blocked == 0'
           "$RUNNER_TEMP/workcell-src/bin/workcell" run \
             --file "$GITHUB_WORKSPACE/docs/workcell-launch-gate.json" \
             --repo "$GITHUB_WORKSPACE" --output "$RUNNER_TEMP/redact-workcell-runs" \
