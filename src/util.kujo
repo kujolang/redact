@@ -67,7 +67,7 @@ export func read_text(path) {
     return {"ok": true, "text": loaded}
 }
 
-// Kujo 1.4 holds the parent directory and opens the final regular file
+// Kujo 1.5 holds the parent directory and opens the final regular file
 // without following symlinks; the byte limit applies to the same handle.
 export func read_text_bounded(path, max_bytes) {
     native_path := normalize_cli_path(path)
@@ -293,7 +293,7 @@ export func unique_push(arr, value) {
     return push(arr, value)
 }
 
-// Kujo 1.4 supplies a constant-time UTF-8 byte count with no temporary
+// Kujo 1.5 supplies a constant-time UTF-8 byte count with no temporary
 // encoding allocation. len(string) continues to count Unicode scalars.
 export func utf8_size(text) {
     return byte_length(text)

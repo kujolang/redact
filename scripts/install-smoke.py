@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install-smoke the committed source archive with a verified Kujo 1.4 binary."""
+"""Install-smoke the committed source archive with a verified Kujo 1.5 binary."""
 import argparse
 import hashlib
 import os
@@ -12,7 +12,7 @@ import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parent.parent
-RELEASE = "v1.4.0"
+RELEASE = "v1.5.0"
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--benchmarks", action="store_true", help="log bounded synthetic cross-platform timings")
 args = parser.parse_args()
@@ -78,7 +78,7 @@ with tempfile.TemporaryDirectory(prefix="redact-install-smoke-") as tmp:
         safe_members(package.namelist())
         package.extractall(checkout)
     kujo = runtime(base)
-    assert run(kujo, "--version").strip() == "kujo 1.4.0"
+    assert run(kujo, "--version").strip() == "kujo 1.5.0"
     assert run(kujo, "run", "redact.kujo", "version", cwd=checkout).strip() == "redact 1.0.0"
     audit = base / "audit"
     run(kujo, "run", "redact.kujo", "scan", "fixtures/sample.md", "--policy",
@@ -93,7 +93,7 @@ with tempfile.TemporaryDirectory(prefix="redact-install-smoke-") as tmp:
     run(kujo, "run", "redact.kujo", "pack", "examples/pack", "--policy",
         "examples/policy.yaml", "--out", pack, "--audit-dir", audit, cwd=checkout)
     assert len(list(pack.iterdir())) == 2
-    print(f"Clean source-archive install smoke passed on {platform.system()} with Kujo 1.4.0")
+    print(f"Clean source-archive install smoke passed on {platform.system()} with Kujo 1.5.0")
     if args.benchmarks:
         for workload in ("max-dictionary", "repeated-dictionary", "unicode-dictionary",
                          "unicode-mixed", "replacement-expansion", "pack-batch", "pack-extended"):

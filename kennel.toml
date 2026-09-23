@@ -17,7 +17,7 @@ public_api = true
 notes = "Stable 1.x CLI, flat-policy, deterministic detector, transform, verifier, audit, and pack contracts within the documented privacy boundary."
 
 [kujo]
-minimum_version = "1.4.0"
+minimum_version = "1.5.0"
 entry = "redact.kujo"
 sources = ["src", "."]
 includes = ["VERSION", "LICENSE", "README.md", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md", "policies", "examples", "fixtures", "docs", "tests", "scripts"]
