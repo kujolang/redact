@@ -5,14 +5,14 @@
 An authorized human identifies the exact candidate SHA, confirms the working
 tree is clean, reviews the [launch checklist](launch-checklist.md), and signs
 the target-domain [privacy/security checklist](domain-signoff/checklist.md).
-Use Kujo v1.4.0 commit
-`266a8902068a14c3d17f803bef467dc28f1fe162`.
+Use Kujo v1.5.0 commit
+`cc2d7dbb59a8dc05f00d629e100932f56f4062f6`.
 
 ```bash
 git pull --ff-only
 export KUJO_BIN=/absolute/path/to/kujo
-test "$("$KUJO_BIN" --version)" = "kujo 1.4.0"
-test "$(cat RUNTIME_VERSION)" = "266a8902068a14c3d17f803bef467dc28f1fe162"
+test "$("$KUJO_BIN" --version)" = "kujo 1.5.0"
+test "$(cat RUNTIME_VERSION)" = "cc2d7dbb59a8dc05f00d629e100932f56f4062f6"
 bash scripts/verify-all.sh
 git status --short
 git rev-parse HEAD
@@ -41,7 +41,7 @@ checks the receipt source commit against the workflow SHA, and uploads the
 verified receipt outside Git for seven days. Inspect the complete job and
 download the proof artifact before it expires; a skipped, failed, or missing
 job is not a Workcell receipt. The separate Redact runtime and install matrix
-continue to require Kujo 1.4.0.
+continue to require Kujo 1.5.0.
 
 Confirm the receipt source commit equals the candidate SHA. Do not commit
 `.workcell/` evidence. If the job cannot start, record the run/tool state,

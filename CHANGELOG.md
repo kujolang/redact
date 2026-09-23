@@ -5,6 +5,9 @@ versions are independent contracts.
 
 ## [Unreleased]
 
+- Require the signed Kujo 1.5.0 release runtime across the version gate,
+  Kennel minimum, source-archive smoke test, CI, Workcell proof, and current
+  user documentation.
 - Reject quoted policy safety booleans and unquoted YAML mappings in term lists;
   preserve literal quoted colon terms.
 - Correct regex detection source spans when an earlier embedded occurrence is

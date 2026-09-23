@@ -19,10 +19,10 @@ before sensitive production use.
 
 ## Install
 
-Redact requires the released Kujo 1.4.0 runtime at commit
-`266a8902068a14c3d17f803bef467dc28f1fe162`.
+Redact requires the released Kujo 1.5.0 runtime at commit
+`cc2d7dbb59a8dc05f00d629e100932f56f4062f6`.
 Download the matching platform archive and checksum from the
-[Kujo v1.4.0 release](https://github.com/kujolang/kujo/releases/tag/v1.4.0),
+[Kujo v1.5.0 release](https://github.com/kujolang/kujo/releases/tag/v1.5.0),
 verify its SHA-256, and extract the `kujo` executable (`kujo.exe` on Windows).
 
 ```bash
@@ -33,7 +33,7 @@ export KUJO_BIN=/absolute/path/to/extracted/kujo
 "$KUJO_BIN" run redact.kujo version
 ```
 
-Expected versions are `kujo 1.4.0` and `redact 1.0.0`. Kennel consumers use
+Expected versions are `kujo 1.5.0` and `redact 1.0.0`. Kennel consumers use
 `kennel.toml`; no registry publication is required for a source checkout.
 Windows users can set `$env:KUJO_BIN` to the extracted `kujo.exe` path.
 To learn the language behind this example, start with the
@@ -66,7 +66,7 @@ Review the sanitized file and its audit run before sharing either one.
 Redact 1.0 is stable for:
 
 - local regular `.txt` and `.md` files up to 1,048,576 bytes;
-- UTF-8 text accepted by Kujo 1.4.0;
+- UTF-8 text accepted by Kujo 1.5.0;
 - `redact-policy/v1`, the documented flat-YAML policy subset;
 - deterministic categories and configured term dictionaries;
 - `remove`, `placeholder`, `role-preserve`, `generalize`, `range`, and
@@ -160,7 +160,7 @@ Pack validates supported members, rejects empty packs, and caps a non-recursive
 pack at 256 supported files and 16 MiB of aggregate UTF-8 input (in addition
 to the 1 MiB per-file limit). Exceeding either cap fails before staging or
 audit creation. It builds output in
-a private directory beside the destination, then uses Kujo 1.4's atomic
+a private directory beside the destination, then uses Kujo 1.5's atomic
 no-replace directory publication: the requested destination is either absent
 or contains the completed pack. Processing or publication failures do not
 publish a partial pack. An audit run may remain incomplete after failure;
@@ -270,6 +270,8 @@ and process peak memory where the host provides it. Timings
 are observational, while output determinism and size contracts are CI gates.
 The [Kujo 1.4.0 synthetic comparison](docs/audits/performance-1.4.0.md)
 records the measured limits and the historical baseline's version difference.
+The [Kujo 1.5.0 compatibility review](docs/audits/runtime-1.5.0.md) records the
+current runtime identity and repeatable verification scope.
 
 The full gate checks all Kujo sources, deterministic and adversarial tests,
 fixture commands, examples, product-version consistency, formatting, lint,
@@ -277,7 +279,7 @@ local Markdown links, generated-artifact hygiene, Kennel validation, and
 ShipCheck. Release candidates additionally require the
 [Workcell proof and hosted CI receipt](docs/release-process.md).
 The hosted Verification workflow also install-smokes a clean committed source
-archive on Linux, macOS, and Windows against checksum-verified Kujo 1.4.0
+archive on Linux, macOS, and Windows against checksum-verified Kujo 1.5.0
 release binaries. Manual dispatches also require a separate AppArmor-backed
 Workcell proof for the exact candidate and retain its receipt as a seven-day
 workflow artifact. Locally, `python3 scripts/install-smoke.py` uses `KUJO_BIN`
@@ -296,7 +298,7 @@ none is implemented in 1.x.
 
 ## Compatibility and Upgrades
 
-Redact 1.x currently requires Kujo 1.4.0 at the pinned release commit in
+Redact 1.x currently requires Kujo 1.5.0 at the pinned release commit in
 `RUNTIME_VERSION`. The version gate rejects other runtimes until they have
 been deliberately validated. The CLI command names, documented exit
 codes, `redact-policy/v1`, audit schemas, and JSON schema majors are stable

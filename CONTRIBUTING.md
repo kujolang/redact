@@ -6,11 +6,11 @@ policy features, audit fields, or file-system behavior.
 
 ## Development setup
 
-Use Kujo 1.4.0 at the commit recorded in `RUNTIME_VERSION` (see
+Use Kujo 1.5.0 at the commit recorded in `RUNTIME_VERSION` (see
 [compatibility and upgrades](README.md#compatibility-and-upgrades)):
 
 ```bash
-export KUJO_BIN=/path/to/kujo-1.4.0/target/release/kujo
+export KUJO_BIN=/path/to/kujo-1.5.0/target/release/kujo
 "$KUJO_BIN" --version
 bash scripts/verify-all.sh
 ```
