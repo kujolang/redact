@@ -63,7 +63,7 @@ was actually published by Redact.
 
 ## Versioned contracts
 
-Product version `1.0.0` is independent of:
+Product version `1.1.0` is independent of:
 
 - `redact-policy/v1`;
 - `redact-cli-output/v1`;

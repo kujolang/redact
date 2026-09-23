@@ -8,5 +8,5 @@ also fail.
 
 Residual risk must be assessed against the intended recipients, data domain,
 threat model, audit storage, retention, incident response, and consequences of
-disclosure. Redact 1.0 does not make that decision and does not certify the
+disclosure. Redact 1.x does not make that decision and does not certify the
 result.

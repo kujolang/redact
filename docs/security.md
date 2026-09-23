@@ -2,7 +2,7 @@
 
 ## Intended use
 
-Redact 1.0 reduces policy-defined sensitive-text exposure in local `.txt` and
+Redact 1.x reduces policy-defined sensitive-text exposure in local `.txt` and
 `.md` files. It is a review aid. It does not guarantee complete detection or
 removal, legal or regulatory compliance, fitness for every domain, or safety of
 unreviewed output. Domain-specific human privacy/security signoff is required
@@ -58,7 +58,7 @@ for every accepted dictionary/document combination.
 
 ## Stdin boundary
 
-Redact 1.0 rejects `-`. It has no implemented or tested bounded multiline
+Redact 1.x rejects `-`. It has no implemented or tested bounded multiline
 stdin path with explicit EOF, read-error, and size-limit behavior. A naive
 line-oriented loop would risk truncation, ambiguity, or unbounded behavior.
 Use a controlled local file; stdin remains a separately reviewed future

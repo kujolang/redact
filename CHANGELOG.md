@@ -5,6 +5,8 @@ versions are independent contracts.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-23
+
 - Require the signed Kujo 1.5.0 release runtime across the version gate,
   Kennel minimum, source-archive smoke test, CI, Workcell proof, and current
   user documentation.
@@ -63,5 +65,7 @@ versions are independent contracts.
 - Introduced the local deterministic technical-preview pipeline and initial
   scan, sanitize, verify, pack, policy, audit, and fixture behavior.
 
+[Unreleased]: https://github.com/kujolang/redact/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/kujolang/redact/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/kujolang/redact/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/kujolang/redact/releases/tag/v0.1.0

@@ -7,7 +7,7 @@ retained, `example.com` is reserved for documentation, and the token is fake.
 Set the released runtime once:
 
 ```bash
-export KUJO_BIN=/path/to/kujo-1.0.0/target/release/kujo
+export KUJO_BIN=/path/to/kujo-1.5.0/target/release/kujo
 ```
 
 ## Scan and JSON output
@@ -87,7 +87,7 @@ printf '%s\n' 'synthetic@example.com' | \
   "$KUJO_BIN" run redact.kujo scan - --policy examples/policy.yaml
 ```
 
-Expected: exit `1` stating that `-` is not supported in Redact 1.0. Use a
+Expected: exit `1` stating that `-` is not supported in Redact 1.x. Use a
 bounded local `.txt` or `.md` file instead.
 
 Run every example with `bash tests/examples_smoke.sh`.
