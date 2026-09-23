@@ -36,7 +36,7 @@ export func transform_document(doc, detections, policy) {
         }
         projected_bytes := content_bytes + n * (utf8_size(replacement) - utf8_size(original))
         if projected_bytes > MAX_OUTPUT_BYTES {
-            return {"ok": false, "error": "transformed output exceeds the 2097152-byte Redact 1.0 limit"}
+            return {"ok": false, "error": "transformed output exceeds the 2097152-byte Redact 1.x limit"}
         }
         content = replace_all_text(content, original, replacement)
         content_bytes = projected_bytes

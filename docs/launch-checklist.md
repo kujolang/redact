@@ -1,16 +1,16 @@
-# Redact 1.0.0 Release Checklist
+# Redact 1.1.0 Release Checklist
 
 This checklist prepares an exact commit for human-approved tagging. Passing it
 does not certify complete redaction, compliance, or arbitrary-domain fitness.
 
 ## Repository and product
 
-- [x] Product version surfaces declare `1.0.0`.
+- [x] Product version surfaces declare `1.1.0`.
 - [x] MIT `LICENSE`, `VERSION`, `RUNTIME_VERSION`, `kennel.toml`,
   `CONTRIBUTING.md`, and `SECURITY.md` exist.
 - [x] README contains stable onboarding, badges, scope, limitations, examples,
   CLI/JSON/exit-code contracts, and compatibility policy.
-- [x] `-` stdin is explicitly rejected and documented as post-1.0.
+- [x] `-` stdin is explicitly rejected and documented as outside Redact 1.x.
 - [x] Synthetic examples cover every stable command and transformation family.
 - [x] Product and schema versions remain independent.
 
@@ -29,7 +29,7 @@ does not certify complete redaction, compliance, or arbitrary-domain fitness.
 ## Exact candidate gates
 
 - [ ] `bash scripts/verify-all.sh` passes on the final commit.
-- [ ] Required fixture commands pass with released Kujo 1.4.0.
+- [ ] Required fixture commands pass with released Kujo 1.5.0.
 - [ ] Markdown link audit reports zero broken local links.
 - [ ] Kennel validation passes.
 - [ ] ShipCheck gate exits `0` with no release-blocking finding.
@@ -41,9 +41,9 @@ does not certify complete redaction, compliance, or arbitrary-domain fitness.
 ## Human release approval
 
 - [ ] Human reviewers approve the exact commit SHA and domain signoff.
-- [ ] Release notes in [v1.0.0.md](releases/v1.0.0.md) are approved.
+- [ ] Release notes in [v1.1.0.md](releases/v1.1.0.md) are approved.
 - [ ] The release owner follows [release-process.md](release-process.md).
-- [ ] Only after approval, an authorized human creates `v1.0.0` on the approved
+- [ ] Only after approval, an authorized human creates `v1.1.0` on the approved
   SHA and reviews the tag-triggered artifacts.
 - [ ] Only after artifact/checksum review, an authorized human creates the
   GitHub release and performs the installation smoke.

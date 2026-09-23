@@ -1,6 +1,6 @@
 # Redact Architecture
 
-Redact is a Kujo 1.4.0 command-line package with a root entrypoint, source modules,
+Redact is a Kujo 1.5.0 command-line package with a root entrypoint, source modules,
 synthetic fixtures/examples, deterministic tests, and local-only artifacts.
 
 ## Pipeline
@@ -51,7 +51,7 @@ sigma. Configured terms are evaluated
 longest-first to prevent shorter configured terms from corrupting overlapping
 phrases. Pack inputs are sorted by filename and processed non-recursively.
 Supported members are validated before staging, then checked again during
-processing. Kujo 1.4 creates a private sibling directory and atomically
+processing. Kujo 1.5 creates a private sibling directory and atomically
 publishes it only when every member succeeds; an existing destination is never
 replaced. Audit output manifests use final paths after successful publication.
 Audit runs may remain incomplete on failure and are not part of the atomic
@@ -63,7 +63,7 @@ was actually published by Redact.
 
 ## Versioned contracts
 
-Product version `1.0.0` is independent of:
+Product version `1.1.0` is independent of:
 
 - `redact-policy/v1`;
 - `redact-cli-output/v1`;

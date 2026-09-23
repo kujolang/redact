@@ -2,7 +2,7 @@
 
 ## Intended use
 
-Redact 1.0 reduces policy-defined sensitive-text exposure in local `.txt` and
+Redact 1.x reduces policy-defined sensitive-text exposure in local `.txt` and
 `.md` files. It is a review aid. It does not guarantee complete detection or
 removal, legal or regulatory compliance, fitness for every domain, or safety of
 unreviewed output. Domain-specific human privacy/security signoff is required
@@ -22,7 +22,7 @@ closed. Audit validation covers the derived run directory, including an existing
 `runs` component. On POSIX, symlink inspection uses the actual filename spelling,
 including literal backslashes. The system `/tmp` and `/var` aliases remain
 accepted as before.
-Input and policy text are read through Kujo 1.4's bounded handle-relative
+Input and policy text are read through Kujo 1.5's bounded handle-relative
 `read_file_beneath`, which holds the parent directory, rejects final symlinks
 and nonregular files, and applies the byte limit to that open handle. The
 preceding path checks still reject explicit symlink components. Replacing a
@@ -33,7 +33,7 @@ verifies atomic replacement does not modify the source inode; Redact does not
 attempt to prohibit hard-linked source files or guarantee inode isolation
 against a hostile same-host actor.
 
-Pack uses Kujo 1.4's private sibling staging directory and atomic no-replace
+Pack uses Kujo 1.5's private sibling staging directory and atomic no-replace
 directory publication on macOS, Linux, and Windows. A processing or publish
 failure cannot expose a partly written requested pack directory. A partial
 audit may still remain, and writes after publication are not a joint atomic
@@ -58,7 +58,7 @@ for every accepted dictionary/document combination.
 
 ## Stdin boundary
 
-Redact 1.0 rejects `-`. It has no implemented or tested bounded multiline
+Redact 1.x rejects `-`. It has no implemented or tested bounded multiline
 stdin path with explicit EOF, read-error, and size-limit behavior. A naive
 line-oriented loop would risk truncation, ambiguity, or unbounded behavior.
 Use a controlled local file; stdin remains a separately reviewed future

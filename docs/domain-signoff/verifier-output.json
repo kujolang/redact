@@ -1,6 +1,6 @@
 {
   "schemaVersion": "redact-verifier/v1",
-  "productVersion": "1.0.0",
+  "productVersion": "1.1.0",
   "risk_score": "low",
   "reason": "no deterministic leakage checks fired",
   "remaining_emails": 0,

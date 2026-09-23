@@ -5,14 +5,14 @@
 An authorized human identifies the exact candidate SHA, confirms the working
 tree is clean, reviews the [launch checklist](launch-checklist.md), and signs
 the target-domain [privacy/security checklist](domain-signoff/checklist.md).
-Use Kujo v1.4.0 commit
-`266a8902068a14c3d17f803bef467dc28f1fe162`.
+Use Kujo v1.5.0 commit
+`cc2d7dbb59a8dc05f00d629e100932f56f4062f6`.
 
 ```bash
 git pull --ff-only
 export KUJO_BIN=/absolute/path/to/kujo
-test "$("$KUJO_BIN" --version)" = "kujo 1.4.0"
-test "$(cat RUNTIME_VERSION)" = "266a8902068a14c3d17f803bef467dc28f1fe162"
+test "$("$KUJO_BIN" --version)" = "kujo 1.5.0"
+test "$(cat RUNTIME_VERSION)" = "cc2d7dbb59a8dc05f00d629e100932f56f4062f6"
 bash scripts/verify-all.sh
 git status --short
 git rev-parse HEAD
@@ -41,7 +41,7 @@ checks the receipt source commit against the workflow SHA, and uploads the
 verified receipt outside Git for seven days. Inspect the complete job and
 download the proof artifact before it expires; a skipped, failed, or missing
 job is not a Workcell receipt. The separate Redact runtime and install matrix
-continue to require Kujo 1.4.0.
+continue to require Kujo 1.5.0.
 
 Confirm the receipt source commit equals the candidate SHA. Do not commit
 `.workcell/` evidence. If the job cannot start, record the run/tool state,
@@ -73,15 +73,15 @@ artifact_root="$(mktemp -d /tmp/redact-v1-artifacts.XXXXXX)"
 artifact_dir="$artifact_root/release"
 scripts/build-release-artifacts.sh "$artifact_dir" "$candidate_sha"
 cd "$artifact_dir"
-shasum -a 256 -c redact-1.0.0-checksums.txt
+shasum -a 256 -c redact-1.1.0-checksums.txt
 ```
 
 Expected files are:
 
-- `redact-1.0.0-source.tar.gz`;
-- `redact-1.0.0-package.zip`;
-- `redact-1.0.0-provenance.json`; and
-- `redact-1.0.0-checksums.txt`.
+- `redact-1.1.0-source.tar.gz`;
+- `redact-1.1.0-package.zip`;
+- `redact-1.1.0-provenance.json`; and
+- `redact-1.1.0-checksums.txt`.
 
 The tag-triggered `release-artifacts` workflow runs the real Verification
 workflow first and uploads the same source/package artifact shapes. It has
@@ -95,12 +95,12 @@ Only after all approvals, an authorized human may run:
 ```bash
 candidate_sha="<approved exact SHA>"
 test "$(git rev-parse "$candidate_sha^{commit}")" = "$candidate_sha"
-git tag -a v1.0.0 "$candidate_sha" -m "Redact v1.0.0"
-git push origin v1.0.0
+git tag -a v1.1.0 "$candidate_sha" -m "Redact v1.1.0"
+git push origin v1.1.0
 ```
 
 Review the tag-triggered workflow and checksums. Prepare the GitHub release from
-[`docs/releases/v1.0.0.md`](releases/v1.0.0.md), attach only verified artifacts,
+[`docs/releases/v1.1.0.md`](releases/v1.1.0.md), attach only verified artifacts,
 and create the release only after a second human confirms the tag SHA and
 checksums. Kennel publication is a separate human-authorized action and is not
 part of this workflow.
@@ -114,7 +114,7 @@ Extract a verified artifact into a new temporary directory and run:
 "$KUJO_BIN" run redact.kujo scan fixtures/sample.md --policy fixtures/sample.policy.yaml --audit-dir /tmp/redact-v1-install-audit
 ```
 
-Confirm `redact 1.0.0`, successful JSON output, no network/provider access, and
+Confirm `redact 1.1.0`, successful JSON output, no network/provider access, and
 raw-free default audit artifacts.
 
 ## Rollback and correction

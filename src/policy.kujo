@@ -37,7 +37,7 @@ export func load_policy(ref) {
         return {"ok": false, "error": "policy path is not a regular file: " + path}
     }
     if file_exists(path)&&file_size(path) > 262144 {
-        return {"ok": false, "error": "policy exceeds the 262144-byte Redact 1.0 limit: " + path}
+        return {"ok": false, "error": "policy exceeds the 262144-byte Redact 1.x limit: " + path}
     }
     loaded := read_text_bounded(path, 262144)
     if loaded["ok"] == false {
@@ -384,10 +384,10 @@ func validate_policy_values(policy) {
         return {"ok": false, "error": "policy safety fields must be true or false"}
     }
     if policy["write_entity_map"] {
-        return {"ok": false, "error": "write_entity_map is not supported in Redact 1.0; set it to false"}
+        return {"ok": false, "error": "write_entity_map is not supported in Redact 1.x; set it to false"}
     }
     if policy["ai_assist"] {
-        return {"ok": false, "error": "ai_assist is not supported in Redact 1.0; set it to false"}
+        return {"ok": false, "error": "ai_assist is not supported in Redact 1.x; set it to false"}
     }
     return {"ok": true}
 }
