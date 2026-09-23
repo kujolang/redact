@@ -79,7 +79,7 @@ with tempfile.TemporaryDirectory(prefix="redact-install-smoke-") as tmp:
         package.extractall(checkout)
     kujo = runtime(base)
     assert run(kujo, "--version").strip() == "kujo 1.5.0"
-    assert run(kujo, "run", "redact.kujo", "version", cwd=checkout).strip() == "redact 1.0.0"
+    assert run(kujo, "run", "redact.kujo", "version", cwd=checkout).strip() == "redact 1.1.0"
     audit = base / "audit"
     run(kujo, "run", "redact.kujo", "scan", "fixtures/sample.md", "--policy",
         "fixtures/sample.policy.yaml", "--audit-dir", audit, cwd=checkout)

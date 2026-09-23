@@ -1,6 +1,6 @@
 [package]
 name = "redact"
-version = "1.0.0"
+version = "1.1.0"
 description = "Deterministic local-first redaction aid for text and Markdown."
 license = "MIT"
 authors = ["Kujolang <me@kujolang.ai>"]
