@@ -1,8 +1,8 @@
 # Redact
 
-![Version 1.1.0](https://img.shields.io/badge/version-1.1.0-blue.svg)
-[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Built with Kujo](https://img.shields.io/badge/built%20with-Kujo-6f42c1.svg)](https://github.com/kujolang/kujo)
+![Version 1.1.0](https://img.shields.io/badge/version-1.1.0-black.svg)
+[![MIT License](https://img.shields.io/badge/license-MIT-lightgrey.svg)](LICENSE)
+[![Built with Kujo](https://img.shields.io/badge/built%20with-Kujo-white.svg)](https://github.com/kujolang/kujo)
 [![Verification](https://github.com/kujolang/redact/actions/workflows/verification.yml/badge.svg)](https://github.com/kujolang/redact/actions/workflows/verification.yml)
 
 Redact 1.1.0 is a deterministic, local-first redaction aid for `.txt` and
